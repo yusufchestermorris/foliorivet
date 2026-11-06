@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! List definitions: Define New Multilevel List (`list.define`) and reading one back
 //! (`list.get`). A definition is Word's abstract numbering: nine levels, each with its number
 //! format, style, start, restart rule, linked paragraph style, alignment, indents, what follows
@@ -119,8 +120,8 @@ pub fn level_from(mut l: Level, i: usize, v: &Value) -> Level {
         None => {}
     }
     match v.get("font") {
-        Some(Value::Null) => l.chr.font = None,
-        Some(Value::String(s)) => l.chr.font = Some(s.chars().take(64).collect()).filter(|s: &String| !s.trim().is_empty()),
+        Some(Value::Null) => l.chr.set_font(None),
+        Some(Value::String(s)) => l.chr.set_font(Some(s.chars().take(64).collect()).filter(|s: &String| !s.trim().is_empty())),
         _ => {}
     }
     if let Some(b) = p::bool(v, "bold") {
@@ -130,8 +131,8 @@ pub fn level_from(mut l: Level, i: usize, v: &Value) -> Level {
         l.chr.italic = Some(b);
     }
     match v.get("color") {
-        Some(Value::Null) => l.chr.color = None,
-        Some(Value::String(s)) => l.chr.color = Rgb::parse(s).map(TextColor::Rgb).or(l.chr.color),
+        Some(Value::Null) => l.chr.set_color(None),
+        Some(Value::String(s)) => l.chr.set_color(Rgb::parse(s).map(TextColor::Rgb).or(l.chr.color)),
         _ => {}
     }
     if let Some(b) = p::bool(v, "legal") {
@@ -204,7 +205,7 @@ fn define(s: &mut Session, v: &Value) -> CmdResult {
     for (i, l) in levels.iter().enumerate() {
         let Some(id) = l.style.as_deref().map(|st| s.doc.styles.find(st).map(|x| x.id.clone()).unwrap_or_else(|| st.to_string())) else { continue };
         if let Some(st) = Arc::make_mut(&mut s.doc.styles).get_mut(&id) {
-            st.para.numbering = Some(NumRef { num, level: i as u8 });
+            st.set_numbering(Some(NumRef { num, level: i as u8 }));
             linked.push(id);
         }
     }
@@ -298,7 +299,7 @@ fn preset(s: &mut Session, v: &Value) -> CmdResult {
     for n in 1..=LEVELS as u8 {
         let id = super::para::ensure_heading_style(s, n);
         if let Some(st) = Arc::make_mut(&mut s.doc.styles).get_mut(&id) {
-            st.para.numbering = Some(NumRef { num, level: n - 1 });
+            st.set_numbering(Some(NumRef { num, level: n - 1 }));
             linked.push(id);
         }
     }

@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 mod alt_chunks;
 mod bidi;
 mod bidi_runs;
@@ -14,6 +15,7 @@ mod drawing_payload;
 mod east_asian_lang;
 mod east_asian_layout;
 mod emphasis_marks;
+mod fidelity_preservation;
 mod fixtures;
 mod glossary;
 mod heading_levels;
@@ -32,6 +34,7 @@ mod section_page_number_type;
 mod section_text_direction;
 mod section_valign;
 mod settings_merge;
+mod style_fidelity;
 mod text_boxes;
 mod toc_ranges;
 mod undefined_style;

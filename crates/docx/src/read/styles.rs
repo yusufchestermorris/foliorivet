@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 use super::{
     AbstractNum, DocxError, El, Level, LevelSuffix, Num, NumFormat, PartFormat, Reader, Style, StyleKind, StyleSheet, TablePart, TableStyleParts,
     VAlign, flag, int, props, tw, u32_of,
@@ -139,6 +140,18 @@ impl Reader<'_> {
             if let Some(p) = s.child("w:pPr") {
                 st.para = self.pc.ppr(p).0;
             }
+            let unhide = flag(s, "w:unhideWhenUsed");
+            let level = st.para.numbering.filter(|n| n.num == props::LEVEL_ONLY).map(|n| n.level);
+            // Do not add provenance when the normal writer already reproduces
+            // these flags. This keeps newly authored styles stable in the model.
+            if unhide != st.hidden.then_some(true) || level.is_some() {
+                st.ooxml = Some(wordcraft_doc::styles::StyleOoxml {
+                    unhide_when_used: unhide,
+                    hidden: st.hidden,
+                    numbering_level: level,
+                    ..Default::default()
+                });
+            }
             // Word gives its built-in heading styles their outline level whether or not the file
             // writes `w:outlineLvl` (some producers leave it out): "heading 2" is level 2 in the
             // Navigation pane and the table of contents, whatever its id (#4696).
@@ -179,8 +192,12 @@ impl Reader<'_> {
             .collect();
         for (s, n) in sheet.styles.iter_mut().zip(fixed) {
             s.para.numbering = n;
+            if let Some(source) = &mut s.ooxml {
+                source.numbering_resolved = n;
+            }
         }
         if sheet.default_para.numbering.is_some_and(|n| n.num == props::LEVEL_ONLY) {
+            sheet.default_numbering_level = sheet.default_para.numbering.map(|n| n.level);
             sheet.default_para.numbering = None;
         }
         // A producer that never writes `w:qFormat` (LibreOffice) still gets Word's usual gallery.
@@ -200,7 +217,10 @@ impl Reader<'_> {
                 t.borders = Some(self.pc.borders(b));
             }
             t.fill = tp.child("w:shd").and_then(|e| self.pc.shd_fill(e));
-            t.cell_margins = tp.child("w:tblCellMar").map(props::margins);
+            let table = self.pc.tblpr(tp);
+            t.cell_margins = table.cell_margins;
+            t.partial_cell_margins = table.partial_cell_margins;
+            t.indent = table.indent;
             t.band_size = tp.child_val("w:tblStyleRowBandSize").and_then(u32_of).map(|n| n.min(1000));
             t.col_band_size = tp.child_val("w:tblStyleColBandSize").and_then(u32_of).map(|n| n.min(1000));
         }

@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 use super::format::fmt;
 use super::lists::touch_all;
 use super::{CharProps, CmdError, CmdResult, ParaProps, Session, Style, StyleKind, Value, json, p, sel_result};
@@ -48,19 +49,19 @@ pub(super) fn apply_style(s: &mut Session, v: &Value) -> CmdResult {
             let para = s.doc.para_mut(a.story, &path)?;
             let len = para.len();
             para.format(0, len, &|c| {
-                c.font = None;
+                c.set_font(None);
                 c.font_cs = None;
                 c.font_ea = None;
                 c.size = None;
                 c.size_cs = None;
-                c.color = None;
+                c.set_color(None);
             })?;
-            para.mark.font = None;
+            para.mark.set_font(None);
             para.mark.font_cs = None;
             para.mark.font_ea = None;
             para.mark.size = None;
             para.mark.size_cs = None;
-            para.mark.color = None;
+            para.mark.set_color(None);
         }
     }
     s.pending = None;
@@ -92,7 +93,7 @@ pub(super) fn create_style(s: &mut Session, v: &Value) -> CmdResult {
     {
         st.para = para.props.clone();
         st.para.style = None;
-        st.para.numbering = None;
+        st.set_numbering(None);
         // A symbol's own font is the symbol's, not the style's.
         st.chr = para.props_at(s.sel.focus.off).clone().without_symbol();
         st.chr.style = None;
@@ -119,6 +120,9 @@ pub(super) fn modify_style(s: &mut Session, v: &Value) -> CmdResult {
         st.chr.overlay(&c);
     }
     if let Some(pp) = para {
+        if pp.numbering.is_some() {
+            st.set_numbering(pp.numbering);
+        }
         st.para.overlay(&pp);
     }
     if let Some(n) = next {

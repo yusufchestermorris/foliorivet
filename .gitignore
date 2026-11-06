@@ -8,3 +8,11 @@ plan/
 /.claude/
 /target-*/
 /craft-fonts/
+/site/
+
+# Private historical evidence junction; excluded from public source.
+/docs/wordcraft/evidence/
+
+# Python bytecode is local build output.
+__pycache__/
+*.py[cod]

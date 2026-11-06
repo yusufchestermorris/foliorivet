@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 use super::format::fmt;
 use super::{Border, BorderStyle, Borders, CmdError, CmdResult, ParaProps, Rgb, Session, TabAlign, TabLeader, TabStop, Value, p, sel_result};
 
@@ -75,7 +76,7 @@ pub fn border_sides(v: &Value, space_tb: f32, space_lr: f32) -> Result<Borders, 
         let x = obj.get(k).filter(|x| x.is_object())?;
         let style = p::str(x, "style").map(BorderStyle::from_ooxml).unwrap_or(BorderStyle::Single);
         let width = p::f32(x, "width").unwrap_or(0.5).clamp(0.25, 6.0);
-        Some(Border { style, width, color: p::str(x, "color").and_then(Rgb::parse), space })
+        Some(Border { color_source: None, style, width, color: p::str(x, "color").and_then(Rgb::parse), space })
     };
     Ok(Borders {
         top: side("top", space_tb),
@@ -97,7 +98,7 @@ pub(super) fn borders(s: &mut Session, v: &Value) -> CmdResult {
     let width = p::f32(v, "width").unwrap_or(0.5).clamp(0.25, 6.0);
     let color = p::str(v, "color").and_then(Rgb::parse);
     let style = p::str(v, "style").map(BorderStyle::from_ooxml).unwrap_or(BorderStyle::Single);
-    let b = Border { style, width, color, space: if kind == "left" || kind == "right" { 4.0 } else { 1.0 } };
+    let b = Border { color_source: None, style, width, color, space: if kind == "left" || kind == "right" { 4.0 } else { 1.0 } };
     if kind == "horizontalLine" {
         // A paragraph with a bottom border, like Word's Horizontal Line.
         return fmt(s, &|p| p.borders = Some(Borders { bottom: Some(Border { width: 1.5, ..b }), ..Default::default() }));

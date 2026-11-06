@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 use super::css::{apply_style, css_len_pt, strip_important};
 use super::import::{PAGE_FONT, PAGE_HEADING_SIZES, collapse_ws};
 use super::{
@@ -494,7 +495,7 @@ fn cell_borders(css: &str) -> Option<wordcraft_doc::props::Borders> {
         }
         // CSS draws no border without a style, or at no width.
         let style = if width > 0.0 { style.unwrap_or(BorderStyle::None) } else { BorderStyle::None };
-        let border = Border { style, width, color, space: 0.0 };
+        let border = Border { color_source: None, style, width, color, space: 0.0 };
         for side in sides {
             let slot = match side {
                 b't' => &mut b.top,

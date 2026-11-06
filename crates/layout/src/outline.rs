@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Outline view (View › Outline): the body as an outline of its headings. No pages: the text runs
 //! on one long sheet like Draft. Each paragraph is indented by its outline level and has a symbol
 //! in front of it: a circled plus for a heading with something under it, a circled minus for a
@@ -180,7 +181,7 @@ pub(crate) fn symbol_items(pl: &Arc<ParaLayout>, x: f32, y: f32, level: u8, chil
         object: None,
         alt: String::new(),
     };
-    let white = Border { style: BorderStyle::Single, width: 1.1, color: Some(Rgb(0xFF, 0xFF, 0xFF)), space: 0.0 };
+    let white = Border { color_source: None, style: BorderStyle::Single, width: 1.1, color: Some(Rgb(0xFF, 0xFF, 0xFF)), space: 0.0 };
     if level >= BODY {
         out.push(disc(2.0));
         return out;
@@ -199,7 +200,7 @@ pub(crate) fn symbol_items(pl: &Arc<ParaLayout>, x: f32, y: f32, level: u8, chil
             y0: by,
             x1: x + w,
             y1: by,
-            border: Border { style: BorderStyle::Wave, width: 0.75, color: Some(SYMBOL_GREY), space: 0.0 },
+            border: Border { color_source: None, style: BorderStyle::Wave, width: 0.75, color: Some(SYMBOL_GREY), space: 0.0 },
         });
     }
     out

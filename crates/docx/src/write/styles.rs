@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 use super::{Document, Level, LevelSuffix, ParaProps, Style, StyleKind, TablePart, VAlign, W, props, xml};
 
 /// Built-in names Word keeps in lower case in styles.xml.
@@ -39,7 +40,7 @@ pub(super) fn styles_xml(doc: &Document) -> Vec<u8> {
     if s.default_para_present || s.default_para != wordcraft_doc::props::ParaProps::default() {
         w.open("w:pPrDefault", &[]);
         w.open("w:pPr", &[]);
-        props::ppr_inner(&mut w, &s.default_para, false, None);
+        props::ppr_inner_level(&mut w, &s.default_para, false, None, s.default_numbering_level.filter(|_| s.default_para.numbering.is_none()));
         w.close("w:pPr");
         w.close("w:pPrDefault");
     }
@@ -94,6 +95,14 @@ fn style_xml(w: &mut W, st: &Style, flagged: &[StyleKind]) {
     }
     if st.hidden {
         w.empty("w:semiHidden", &[]);
+    }
+    if let Some(source) = st.ooxml.as_ref().filter(|m| m.hidden == st.hidden) {
+        match source.unhide_when_used {
+            Some(true) => w.empty("w:unhideWhenUsed", &[]),
+            Some(false) => w.val("w:unhideWhenUsed", "0"),
+            None => {}
+        }
+    } else if st.hidden {
         w.empty("w:unhideWhenUsed", &[]);
     }
     if st.quick {
@@ -102,9 +111,10 @@ fn style_xml(w: &mut W, st: &Style, flagged: &[StyleKind]) {
     if st.locked {
         w.empty("w:locked", &[]);
     }
-    if !st.para.is_empty() && st.kind != StyleKind::Character {
+    let level = st.ooxml.as_ref().filter(|m| m.numbering_resolved == st.para.numbering).and_then(|m| m.numbering_level);
+    if (!st.para.is_empty() || level.is_some()) && st.kind != StyleKind::Character {
         w.open("w:pPr", &[]);
-        props::ppr_inner(w, &st.para, false, None);
+        props::ppr_inner_level(w, &st.para, false, None, level);
         w.close("w:pPr");
     }
     if props::has_rpr(&st.chr) && st.kind != StyleKind::Numbering {
@@ -113,22 +123,7 @@ fn style_xml(w: &mut W, st: &Style, flagged: &[StyleKind]) {
         w.close("w:rPr");
     }
     if let Some(t) = &st.table {
-        if t.borders.is_some() || t.cell_margins.is_some() || t.band_size.is_some() || t.col_band_size.is_some() {
-            w.open("w:tblPr", &[]);
-            if let Some(n) = t.band_size {
-                w.val("w:tblStyleRowBandSize", &n.min(1000).to_string());
-            }
-            if let Some(n) = t.col_band_size {
-                w.val("w:tblStyleColBandSize", &n.min(1000).to_string());
-            }
-            if let Some(b) = &t.borders {
-                props::borders(w, "w:tblBorders", b, Some("w:insideH"), &[]);
-            }
-            if let Some(m) = &t.cell_margins {
-                props::margins(w, "w:tblCellMar", m);
-            }
-            w.close("w:tblPr");
-        }
+        table_defaults(w, t);
         // The conditional formatting parts (ECMA-376 §17.7.6): paragraph and run properties,
         // then cell borders, shading and vertical alignment. The whole table's text formatting
         // is the style's own (above).
@@ -177,6 +172,36 @@ fn style_xml(w: &mut W, st: &Style, flagged: &[StyleKind]) {
         }
     }
     w.close("w:style");
+}
+
+fn table_defaults(w: &mut W, t: &wordcraft_doc::styles::TableStyleParts) {
+    if t.borders.is_some()
+        || t.cell_margins.is_some()
+        || t.partial_cell_margins.is_some()
+        || t.indent.is_some()
+        || t.band_size.is_some()
+        || t.col_band_size.is_some()
+    {
+        w.open("w:tblPr", &[]);
+        if let Some(n) = t.band_size {
+            w.val("w:tblStyleRowBandSize", &n.min(1000).to_string());
+        }
+        if let Some(n) = t.col_band_size {
+            w.val("w:tblStyleColBandSize", &n.min(1000).to_string());
+        }
+        if let Some(indent) = t.indent {
+            w.empty("w:tblInd", &[("w:w", &crate::units::twips(indent)), ("w:type", "dxa")]);
+        }
+        if let Some(b) = &t.borders {
+            props::borders(w, "w:tblBorders", b, Some("w:insideH"), &[]);
+        }
+        if let Some(m) = &t.cell_margins {
+            props::margins(w, "w:tblCellMar", m);
+        } else if let Some(m) = &t.partial_cell_margins {
+            props::margin_sides(w, "w:tblCellMar", m);
+        }
+        w.close("w:tblPr");
+    }
 }
 
 pub(super) fn numbering_xml(doc: &Document) -> Vec<u8> {

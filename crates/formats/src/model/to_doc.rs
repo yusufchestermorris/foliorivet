@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 use super::from_doc::uses_kind;
 use super::types::{
     CODE_STYLE, Cell, Dropped, FBlock, FTable, Flow, Fmt, Inline, Kind, ListInfo, MAX_DEPTH, MAX_GROUP_DEPTH, MAX_RUN_STRINGS, MONO_FONT, Para,
@@ -98,7 +99,10 @@ fn code_style() -> Style {
 }
 
 fn rule_borders() -> Borders {
-    Borders { bottom: Some(Border { style: BorderStyle::Single, width: 0.75, color: Some(Rgb(0xA0, 0xA0, 0xA0)), space: 1.0 }), ..Default::default() }
+    Borders {
+        bottom: Some(Border { color_source: None, style: BorderStyle::Single, width: 0.75, color: Some(Rgb(0xA0, 0xA0, 0xA0)), space: 1.0 }),
+        ..Default::default()
+    }
 }
 
 /// Append text (without object characters) or one inline object to the end of `p`.

@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Developer › Controls: content controls (see [`wordcraft_doc::control`]) — insert each kind,
 //! set their properties, tick check boxes, choose list entries and dates, Design Mode.
 //!
@@ -668,7 +669,7 @@ fn toggle_check_box(s: &mut Session, v: &Value) -> CmdResult {
     let (ch, font) = if now { (*checked_char, checked_font) } else { (*unchecked_char, unchecked_font) };
     let mut props = content_base(s, &r);
     if !font.is_empty() {
-        props.font = Some(font.clone());
+        props.set_font(Some(font.clone()));
     }
     set_content(s, &r, &ch.to_string(), &props)?;
     if let Some(c) = s.doc.control_mut(&r.start) {

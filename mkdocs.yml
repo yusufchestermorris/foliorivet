@@ -1,0 +1,124 @@
+site_name: FolioRivet
+site_description: Documentation for FolioRivet 0.1.0a1 Python bindings â€” Headless DOCX template engine
+site_author: FolioRivet Contributors
+
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+exclude_docs: |
+  brand/*
+  images/*
+  release/*
+  wordcraft/*
+  architecture.md
+  contributors.md
+  control-protocol.md
+  egui-037-migration-plan.md
+  file-format-parity.md
+  gaps.md
+  hardware-parity.md
+  layout-parity.md
+  localization-*.md
+  mcp.md
+  odf-interpretation.md
+  odt-element-audit.md
+  parity-checklist.md
+  recovery.md
+  releasing.md
+  roadmap.md
+  shared-pdf.md
+  spelling-*.md
+  target-app-parity.md
+  typing-parity.md
+  ui-parity.md
+  zotero.md
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Overview: getting-started/index.md
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quickstart.md
+      - Your First Template: getting-started/first-template.md
+  - Concepts:
+      - Overview: concepts/index.md
+      - How It Works: concepts/how-it-works.md
+      - Template Syntax: concepts/template-syntax.md
+      - Scalar Values: concepts/scalar-values.md
+      - Table Rows: concepts/table-rows.md
+      - Pictures & Images: concepts/pictures.md
+      - Repeating Blocks: concepts/repeating-blocks.md
+      - Conditional Blocks: concepts/conditional-blocks.md
+      - Inspection: concepts/inspection.md
+      - Preflight: concepts/preflight.md
+      - Error Handling: concepts/error-handling.md
+  - API Reference:
+      - Overview: api/index.md
+      - Rendering: api/rendering.md
+      - Inspection: api/inspection.md
+      - Preflight: api/preflight.md
+      - Exceptions: api/exceptions.md
+      - Types: api/types.md
+  - Examples:
+      - Overview: examples/index.md
+      - Training & Evaluation: examples/training-evaluation.md
+      - Invoice & Quotation: examples/invoice.md
+      - Project Status: examples/project-status.md
+      - Practical Recipes: examples/recipes.md
+  - Reference:
+      - Compatibility Matrix: reference/compatibility.md
+      - Known Limitations: reference/limitations.md
+      - Troubleshooting: reference/troubleshooting.md
+      - FAQ: reference/faq.md
+      - Support & Licensing: reference/support.md

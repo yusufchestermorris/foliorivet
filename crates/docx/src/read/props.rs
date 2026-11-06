@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! `w:rPr`, `w:pPr`, table/row/cell and section property readers.
 
 use std::collections::HashMap;
@@ -240,11 +241,23 @@ impl PropCtx {
                     // Latin letters. A Normal style with only `w:eastAsia`/`w:cs` keeps the
                     // `docDefaults` font, and so does a hinted run, as in Word.
                     c.font = themed("w:asciiTheme").or_else(|| named("w:ascii")).or_else(|| themed("w:hAnsiTheme")).or_else(|| named("w:hAnsi"));
-                    // The complex-script font (Persian, Arabic, Hebrew text). A `w:cstheme` font is
-                    // left to inherit: the theme's per-script fonts aren't read.
+                    if k.attr("w:asciiTheme").is_some()
+                        || k.attr("w:hAnsiTheme").is_some()
+                        || (k.attr("w:ascii").is_some() && k.attr("w:hAnsi").is_some() && k.attr("w:ascii") != k.attr("w:hAnsi"))
+                    {
+                        let bounded = |a: &str| named(a).filter(|s| s.len() <= 256);
+                        c.font_source = Some(Box::new(wordcraft_doc::props::OoxmlFonts {
+                            ascii: bounded("w:ascii"),
+                            high_ansi: bounded("w:hAnsi"),
+                            ascii_theme: bounded("w:asciiTheme"),
+                            high_ansi_theme: bounded("w:hAnsiTheme"),
+                            resolved: c.font.clone(),
+                        }));
+                    }
+                    // Keep theme slots independently of concrete fallback names for saving.
+                    c.font_cs_theme = named("w:cstheme");
+                    c.font_ea_theme = named("w:eastAsiaTheme");
                     c.font_cs = k.attr("w:cs").filter(|f| !f.is_empty() && f.len() < 256).map(str::to_string);
-                    // The East Asian font (Chinese, Japanese, Korean text). A `w:eastAsiaTheme` font
-                    // is left to inherit, like `w:cstheme`.
                     c.font_ea = k.attr("w:eastAsia").filter(|f| !f.is_empty() && f.len() < 256).map(str::to_string);
                 }
                 "w:b" => c.bold = Some(on_off(k)),
@@ -272,7 +285,8 @@ impl PropCtx {
                         (None, Some(v)) if v.eq_ignore_ascii_case("auto") => Some(TextColor::Auto),
                         (None, Some(v)) => Rgb::parse(v).map(TextColor::Rgb),
                         (None, None) => None,
-                    }
+                    };
+                    c.color_source = self.color_source(k, "w:val", c.color);
                 }
                 "w:spacing" => c.spacing = tw(k, "w:val").map(|v| v.clamp(-1584.0, 1584.0)),
                 "w:w" => c.scale = k.attr("w:val").and_then(|v| measure(v.trim_end_matches('%'), 1.0)).map(|v| v.clamp(1.0, 600.0)),
@@ -482,13 +496,24 @@ fn shd_fill(e: &El) -> Option<Rgb> {
 }
 
 impl PropCtx {
+    fn color_source(&self, e: &El, value: &str, resolved: Option<TextColor>) -> Option<wordcraft_doc::props::OoxmlColor> {
+        let slot = e.attr("w:themeColor").and_then(wordcraft_doc::props::ThemeSlot::parse)?;
+        let byte = |a| e.attr(a).and_then(|s| (s.len() == 2).then_some(s)).and_then(|s| u8::from_str_radix(s, 16).ok());
+        Some(wordcraft_doc::props::OoxmlColor {
+            slot,
+            tint: byte("w:themeTint"),
+            shade: byte("w:themeShade"),
+            fallback: e.attr(value).and_then(TextColor::parse),
+            resolved,
+        })
+    }
     /// One border (`CT_Border`); its theme colour supersedes `w:color`, as for text.
     pub fn border(&self, e: &El) -> Border {
         let style = BorderStyle::from_ooxml(e.attr("w:val").unwrap_or("single"));
         let width = e.attr("w:sz").and_then(|v| measure(v, 8.0)).unwrap_or(0.5).clamp(0.0, 12.0);
         let color = self.theme_color(e, "w:themeColor", "w:themeTint", "w:themeShade").or_else(|| e.attr("w:color").and_then(Rgb::parse));
         let space = e.attr("w:space").and_then(|v| measure(v, 1.0)).unwrap_or(0.0).clamp(0.0, 31.0);
-        Border { style, width, color, space }
+        Border { style, width, color, space, color_source: self.color_source(e, "w:color", color.map(TextColor::Rgb)) }
     }
 
     /// `w:pBdr`, `w:tblBorders`, `w:tcBorders`, `w:pgBorders`.
@@ -507,11 +532,6 @@ impl PropCtx {
         }
         b
     }
-}
-
-/// Margins element (`w:tblCellMar`, `w:tcMar`) → [top, left, bottom, right].
-pub fn margins(e: &El) -> [f32; 4] {
-    margin_sides(e).map(|side| side.unwrap_or(0.0))
 }
 
 fn margin_sides(e: &El) -> [Option<f32>; 4] {
@@ -544,7 +564,14 @@ impl PropCtx {
                 "w:shd" => t.shading = self.shd_fill(k),
                 "w:tblLayout" => t.fixed = k.attr("w:type") == Some("fixed"),
                 "w:bidiVisual" => t.bidi_visual = on_off(k),
-                "w:tblCellMar" => t.cell_margins = Some(margins(k)),
+                "w:tblCellMar" => {
+                    let sides = margin_sides(k);
+                    if sides.iter().all(Option::is_some) {
+                        t.cell_margins = Some(sides.map(|v| v.unwrap_or(0.0)));
+                    } else {
+                        t.partial_cell_margins = Some(sides);
+                    }
+                }
                 "w:tblLook" => t.look = look(k),
                 "w:tblpPr" => t.float = Some(table_float(k)),
                 "w:tblOverlap" => {

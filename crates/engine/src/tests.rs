@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 // A copy of craft-proof's hand-written Czech fixture (`crates/proof/src/cs/test_dict.rs` in
 // craft-libs, which a dependency's tests can't share); its install helper resolves this parent import.
 use wordcraft_proof::cs::install_dictionary;
@@ -16,6 +17,7 @@ mod font_sizes;
 mod fonts;
 mod ime_noop;
 mod revision_checks;
+mod style_fidelity;
 mod typing;
 mod wordart;
 

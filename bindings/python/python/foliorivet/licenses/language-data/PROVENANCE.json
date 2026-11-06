@@ -1,0 +1,53 @@
+{
+  "revision": "9d6d54d6d9ff603cc41e12e5f6ba51af3554ab66",
+  "files": [
+    {
+      "source": "ATTRIBUTION.md",
+      "sha256": "276c22b3ea4c5125d8fa363495dbb33cfb7dde6ac0a0845c6dba0b5704a742f3"
+    },
+    {
+      "source": "LICENSE-MIT",
+      "sha256": "4265b73c41a4f898f2340fd47c7a51afbc379a0f41880199beaccd5b2da85ac0"
+    },
+    {
+      "source": "LICENSE-APACHE",
+      "sha256": "eb3d7b5485466acbd81f2b496f595ab637d2792e268206b27d99e793bdb67549"
+    },
+    {
+      "source": "language-data\\en-au\\LICENCE-SCOWL.txt",
+      "sha256": "1c1dfb5a2331ec9492b9692917760aff5aaadbb6a4c71dc1fd6eb70a82f185ca"
+    },
+    {
+      "source": "language-data\\en-ca\\LICENCE-SCOWL.txt",
+      "sha256": "e9c5ac6a3bbd051172c85b558e0471b96f9a13f941cfe468d41893bdeb745933"
+    },
+    {
+      "source": "language-data\\en-gb\\LICENCE-SCOWL.txt",
+      "sha256": "72827bd23b623a253f7928657d68a7b020eea3c7ab8bdfbb1e61323bc8b010c4"
+    },
+    {
+      "source": "language-data\\en-us\\LICENCE-SCOWL.txt",
+      "sha256": "d63c711523fc9504fb71e1278489c6d7bb8cafcba75158c107cd17844955470f"
+    },
+    {
+      "source": "language-data\\de\\hyphenation.pat",
+      "sha256": "374ad1ce3263f8a2791ec070ef9b516c532dae64456f3fb656e617e8ae53a9d3"
+    },
+    {
+      "source": "language-data\\en-us\\hyphenation.pat",
+      "sha256": "0ad447633731c6c9faaf02ac1b327934eaac8aab23f658624d6c67ffe44b88b8"
+    },
+    {
+      "source": "language-data\\it\\hyphenation.pat",
+      "sha256": "6ce56ed6ed2ca7c0688838e366e6595e0429f984f4fc6e96ec045cebb1e76a47"
+    },
+    {
+      "source": "language-data\\pl\\hyphenation.pat",
+      "sha256": "83ddbbd21bc06a44bc4f4a4c49c38782e809cff5f026b764c044daa29e818843"
+    },
+    {
+      "source": "language-data\\pt\\hyphenation.pat",
+      "sha256": "c110a39e501db372d1d755e1c64464321a2efa7d8e9617f66001000389b941f2"
+    }
+  ]
+}

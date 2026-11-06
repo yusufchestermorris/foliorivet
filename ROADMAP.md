@@ -1,4 +1,32 @@
+<!-- Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06). -->
 # WordCraft roadmap
+
+## Current disposition — 6 November 2026
+
+Stage 6.5 is COMPLETE for bounded local prototype qualification and evidence-backed issue disposition; see the canonical docs/wordcraft/evidence/stage6.5/CLOSURE.md. Earlier IN PROGRESS/open-gate notes below are historical. Full Linux CI remains failing; desktop UI, untested storage/failure modes, distribution and production remain unqualified/held. Source-notice and brand review findings are retained as release blockers, not cleared artifacts. Clean-host and independent onboarding studies are deferred per user instruction. Stage 7 is COMPLETE for the bounded feasibility assessment: [decision and handoff](docs/wordcraft/evidence/stage7/README.md). Prototype feasible with limitations; public preview HOLD; do not migrate production yet. Stages 8–12 remain planned, not started. No push, publication or cutover authorized.
+
+> **Scope update, 6 November 2026:** The user deferred clean-host and measured
+> independent onboarding studies to future adoption testing. Neither blocks
+> Stage 6.5/current bounded-prototype assessment. Other technical, storage,
+> artifact and later production/release requirements remain unchanged.
+> Stage 6.5 remains IN PROGRESS; no new test results or release approval implied.
+
+> **Current FolioRivet status, 5 November 2026:** Stages 1–5 retain bounded
+> passes; Stage 6 bounded Lantern qualification passes with user-confirmed Word
+> review and user-reported onboarding. Stage 6.5 is IN PROGRESS: reproducible
+> qualification, language-data notices and fresh Windows/Linux checks are recorded
+> in [Stage 6.5 evidence](docs/wordcraft/evidence/stage6.5/README.md).
+> Full production, clean deployment, measured onboarding and release clearance
+> remain NOT VERIFIED; Stage 7 has not started. Earlier local status notes below
+> are historical. No publication or cutover authorized.
+
+> **FolioRivet local status, 5 November 2026:** Stage 6 technical continuation
+> passes fresh Windows/Linux installed-native jobs, six Word save/reopen/export
+> audits and 30 matching page pairs. Native heading/table pagination repaired.
+> Independent Word review and onboarding remain pending; full production gate
+> and Stage 7 remain unverified. See [the evidence](docs/wordcraft/evidence/stage6/CONTINUATION.md).
+
+> **Local FolioRivet revision, 2026-11-05:** Stage 2 passes for the agreed representative-template scope. Stage 3 native scalar bindings pass installed Windows/Linux wheel checks and automated Word review; the original files passed user prompt review, and the style-loss repair now passes native and Word behavior checks. Stage 3 now passes for the agreed scalar-template scope after user-reported no-prompt review and structural verification of both repaired saved copies. Upstream parity scores are unchanged. See [Stage 3 evidence](docs/wordcraft/evidence/STAGE3.md).
 
 > **Highlight update:** 2026-10-25 · Highlight shortcut toggles the last chosen colour off when the whole selection has it; explicit colour commands remain setters (#4085). Readiness estimates unchanged.
 
@@ -1197,3 +1225,28 @@ Footer page-table height and body wrapping are corrected. Other pagination gaps 
 | 2026-10-27 | trivial | Progress log: AutoCorrect Options with no document open (#4585) |
 | 2026-10-28 | trivial | Progress log: RTF metafile pictures are imported (#4259) |
 | 2026-10-28 | trivial | Progress log: Chinese and Japanese text counts a word per character (#4547) |
+
+## Local FolioRivet revision history
+
+- 5 November 2026: Stage 4 representative saved-copy structural checks and user-reported no-repair-prompt review pass for both generation platforms. Stage 4 gate PASS in the agreed row/chart scope; broader limits remain. No later-stage work authorized by this confirmation. See docs/wordcraft/evidence/STAGE4.md.
+
+- 5 November 2026: Stage 4 bounded row/chart operations and original invoice example verified through installed Windows/Linux native wheels and CLI, twelve Word automation cases and 31 pixel-identical page pairs. Independent repair-prompt review remains pending; the full engine's recorded proofing failure remains explicit. Upstream parity estimates are unchanged. See docs/wordcraft/evidence/STAGE4.md.
+
+- 5 November 2026: bounded Stage 3 style-preservation repair and two-platform native/Word behavior evidence recorded. New saved copies now pass structural and user-reported no-prompt review; Stage 3 passes in the agreed scope. Upstream parity estimates are unchanged. See docs/wordcraft/evidence/stage3/style-repair/REPAIR.md (repository-relative).
+
+## Local FolioRivet Stage 5 progress
+
+Status updated 5 November 2026: user-authorized repeated and optional blocks
+implemented through the shared engine. Windows/Linux installed-wheel and CLI
+matrices, Word open/save/reopen, structure and 43 page-pair comparisons pass.
+Independent Word repair-prompt and saved-copy review remains pending; Stage 6
+has not begun. Upstream readiness scores are unchanged. See
+[Stage 5 evidence](docs/wordcraft/evidence/STAGE5.md).
+
+Revision history, 5 November 2026: Stage 5 bounded implementation and qualification
+added; 15 focused tests pass on each platform. Full Windows engine has 1,220
+passes and the inherited proofing failure. All changes remain uncommitted.
+
+Local FolioRivet status, 5 November 2026: Stage 5 gate PASS for the bounded representative block scope. Both supplied manual-review outputs retain the checked content, styles, geometry, charts and relationships and match automated Word saves; user reports no repair prompts. Existing proofing/qualification limits remain. Stage 6 has not begun. See docs/wordcraft/evidence/STAGE5.md.
+
+Local revision, 5 November 2026: Stage 6 bounded qualification continued with a focused layout repair and cross-platform/Word evidence; no release or cutover authorized.

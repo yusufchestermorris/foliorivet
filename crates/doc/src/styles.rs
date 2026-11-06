@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Styles: paragraph, character, table and linked styles with `based on` chains, plus the
 //! built-in style set (our own values in the spirit of a modern word processor's defaults).
 
@@ -40,6 +41,9 @@ pub struct Style {
     /// Shown in the Styles gallery on the Home tab.
     pub quick: bool,
     pub hidden: bool,
+    /// Imported OOXML style metadata, independent of effective layout properties.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ooxml: Option<StyleOoxml>,
     /// Built in (cannot be deleted).
     pub builtin: bool,
     /// Can't be applied while Restrict Editing limits formatting to a selection of styles
@@ -54,6 +58,27 @@ pub struct Style {
     pub table: Option<TableStyleParts>,
 }
 
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
+#[serde(default, rename_all = "camelCase")]
+pub struct StyleOoxml {
+    pub unhide_when_used: Option<bool>,
+    /// Visibility at import; an explicit change uses the normal writer behavior.
+    pub hidden: bool,
+    pub numbering_level: Option<u8>,
+    /// Effective numbering at import, used to invalidate a changed declaration.
+    pub numbering_resolved: Option<crate::props::NumRef>,
+}
+
+impl Style {
+    /// Explicit numbering edits replace a preserved level-only declaration too.
+    pub fn set_numbering(&mut self, numbering: Option<crate::props::NumRef>) {
+        if let Some(source) = &mut self.ooxml {
+            source.numbering_level = None;
+        }
+        self.para.numbering = numbering;
+    }
+}
+
 /// Table style conditional formats (shading + character formatting per region).
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
 #[serde(default, rename_all = "camelCase")]
@@ -63,6 +88,11 @@ pub struct TableStyleParts {
     pub fill: Option<Rgb>,
     /// Cell margins, points: [top, left, bottom, right] (`w:tblCellMar`).
     pub cell_margins: Option<[f32; 4]>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub partial_cell_margins: Option<[Option<f32>; 4]>,
+    /// Table indentation, points, including an explicit zero.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub indent: Option<f32>,
     pub header_fill: Option<Rgb>,
     pub header_chr: CharProps,
     /// Cell borders of the header row (`firstRow` region's `w:tcBorders`): `between` is the
@@ -319,7 +349,18 @@ impl TableStyleParts {
         self.col_band_size = patch.col_band_size.or(self.col_band_size);
         self.band_chr.overlay(&patch.band_chr);
         self.fill = patch.fill.or(self.fill);
-        self.cell_margins = patch.cell_margins.or(self.cell_margins);
+        if let Some(m) = patch.cell_margins {
+            self.cell_margins = Some(m);
+            self.partial_cell_margins = None;
+        } else if let Some(sides) = patch.partial_cell_margins {
+            if let Some(base) = self.cell_margins {
+                self.cell_margins = Some(std::array::from_fn(|i| sides[i].unwrap_or(base[i])));
+            } else {
+                let base = self.partial_cell_margins.unwrap_or([None; 4]);
+                self.partial_cell_margins = Some(std::array::from_fn(|i| sides[i].or(base[i])));
+            }
+        }
+        self.indent = patch.indent.or(self.indent);
         self.header_fill = patch.header_fill.or(self.header_fill);
         self.header_chr.overlay(&patch.header_chr);
         self.band_fill = patch.band_fill.or(self.band_fill);
@@ -476,6 +517,9 @@ pub struct StyleSheet {
     /// Preserve an explicit `w:pPrDefault`, even when empty. Omission leaves defaults to
     /// the application; nonempty `default_para` is always written after spacing edits.
     pub default_para_present: bool,
+    /// Source level-only numbering in document defaults; not an effective list.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub default_numbering_level: Option<u8>,
     pub styles: Vec<Style>,
     /// The file's `w:latentStyles` (behaviour of built-in styles not defined in the document:
     /// gallery, priority, visibility), as XML, written back as is.
@@ -511,6 +555,7 @@ impl StyleSheet {
             default_chr: CharProps::default(),
             default_para: ParaProps::default(),
             default_para_present: true,
+            default_numbering_level: None,
             styles: Vec::new(),
             latent_styles: None,
         }
@@ -528,6 +573,7 @@ impl StyleSheet {
                 ..para()
             },
             default_para_present: true,
+            default_numbering_level: None,
             styles: Vec::new(),
             latent_styles: None,
         };
@@ -631,7 +677,7 @@ impl StyleSheet {
             quick: true,
             ..p_style()
         });
-        let blue_line = Border { style: BorderStyle::Single, width: 0.5, color: Some(HEADING_BLUE), space: 10.0 };
+        let blue_line = Border { color_source: None, style: BorderStyle::Single, width: 0.5, color: Some(HEADING_BLUE), space: 10.0 };
         add(Style {
             id: "IntenseQuote".into(),
             name: "Intense Quote".into(),
@@ -892,7 +938,7 @@ fn p_style() -> Style {
 
 /// A few table styles of our own (grid, plain, light/medium accents).
 fn table_styles() -> Vec<Style> {
-    let thin = |c: Rgb| Border { style: BorderStyle::Single, width: 0.5, color: Some(c), space: 0.0 };
+    let thin = |c: Rgb| Border { color_source: None, style: BorderStyle::Single, width: 0.5, color: Some(c), space: 0.0 };
     // Bands of one row and one column, written out so Word bands them too (#3415).
     let mk = |id: &str, name: &str, parts: TableStyleParts| Style {
         id: id.into(),

@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 use super::enter_tab::insert_paragraphs;
 use super::{
     Block, Border, BorderStyle, CmdError, CmdResult, ListKind, NumRef, OBJ, Path, Pos, Selection, Session, StoryRef, Table, Value, delete_selection,
@@ -275,7 +276,7 @@ pub(super) fn border_line(s: &Session, at: &Pos) -> Option<Border> {
         '#' => (BorderStyle::Triple, 0.75),
         _ => return None,
     };
-    Some(Border { style, width, color: None, space: 1.0 })
+    Some(Border { color_source: None, style, width, color: None, space: 1.0 })
 }
 
 /// AutoFormat tables: a body paragraph that is exactly "+---+-----+" (plus signs around runs

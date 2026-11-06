@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Tools › Templates and Add-ins: the template a document is attached to, updating the
 //! document's styles from it, and the Organizer (copy styles from another document or template,
 //! delete and rename styles in this one).
@@ -372,6 +373,9 @@ pub fn copy_styles(doc: &mut Document, src: &Document, ids: &[String]) -> Value 
             d.next = next;
             d.linked = linked;
             d.para.numbering = numbering.filter(|n| n.num != 0 || st.para.numbering.is_some_and(|o| o.num == 0));
+            if let Some(source) = &mut d.ooxml {
+                source.numbering_resolved = d.para.numbering;
+            }
         }
     }
     json!({"added": added, "replaced": replaced, "skipped": skipped})

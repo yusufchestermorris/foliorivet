@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Paragraph dialogs (#320): Tabs, and Borders and Shading. Each ends by running commands
 //! (`para.tabs`; `para.borders`, `para.shading`, `format.set`, `format.shading`,
 //! `design.pageBorders`) as one undo step, so agents get the same result without the dialog.
@@ -454,7 +455,7 @@ impl LineForm {
     }
 
     fn border(&self, side: usize) -> Border {
-        Border { style: self.style, width: self.side_width(side), color: Rgb::parse(&self.color), space: 0.0 }
+        Border { color_source: None, style: self.style, width: self.side_width(side), color: Rgb::parse(&self.color), space: 0.0 }
     }
 
     /// The `sides` parameter of `para.borders` / `design.pageBorders`.
@@ -521,7 +522,7 @@ impl BordersForm {
                 let first = [TOP, LEFT, BOTTOM, RIGHT].into_iter().find(|i| self.para.sides.get(*i).copied().unwrap_or(false));
                 let border = match first {
                     Some(i) => self.para.border(i),
-                    None => Border { style: BorderStyle::None, width: 0.0, color: None, space: 0.0 },
+                    None => Border { color_source: None, style: BorderStyle::None, width: 0.0, color: None, space: 0.0 },
                 };
                 out.push(("format.set", json!({"props": {"border": border}})));
             } else {

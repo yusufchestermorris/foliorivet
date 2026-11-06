@@ -1,3 +1,4 @@
+<!-- Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06). -->
 # WordCraft — instructions for agents
 
 WordCraft is a clean-room, open-source, Rust-native word processor targeting Microsoft Word parity — and going further on speed, openness and agent control. It runs natively on macOS, Windows, Linux and BSD, and on the web via WASM. Siblings with the same conventions: `../photocraft` (Photoshop), `../vectorcraft` (Illustrator), `../filmcraft` (Premiere), `../lightcraft` (Lightroom), `../pdfcraft` (Acrobat), `../effectcraft` (After Effects), `../designcraft` (InDesign).
@@ -85,3 +86,63 @@ Progress docs: `ROADMAP.md` (stage, headline numbers, progress log), `docs/targe
 - Workflows in `.github/workflows/` call the shared workflows in [`storytold/craft-common-actions`](https://github.com/storytold/craft-common-actions) at `@main`, with their inputs and secrets. No other jobs: if no shared workflow does what's needed, it doesn't go here.
 - Don't add or change CI in a feature or fix PR. If the existing workflows can't build or test a change, link an existing craft-common-actions issue or PR, or open a new issue, or a PR only for a small fix that is safe for every app and does not increase CI time.
 - Some workflow files here still run their own jobs. Don't add to them. Moving a job into craft-common-actions is its own task, never part of another PR, and the job stays here until a shared workflow runs it.
+
+## FolioRivet local setup guidance
+
+These installed local rules override conflicting upstream commit instructions. Leave all work uncommitted. The canonical project plan is [docs/wordcraft/PLAN.md](docs/wordcraft/PLAN.md); apply [the legal policy](docs/wordcraft/LEGAL_IP_POLICY.md). Stage 1 baseline passed; the user has authorized Stage 2 fidelity work. Do not begin bindings before the fidelity gate. Do not push or publish.
+
+## Scope and architecture
+
+- Never create Git commits. Leave changes uncommitted for user review. If a task
+  requires a commit, stop and tell the user.
+- Implement Option A: native Python bindings to Wordcraft's existing Rust engine,
+  with the same document operations available through the headless CLI.
+- Reuse the engine and command registry. Do not build another headless application,
+  duplicate the renderer or add desktop UI features for this spike.
+- Isolate PyO3 and Python packaging in a binding crate. Core document operations
+  must remain callable from Rust without Python.
+- Keep bindings thin and synchronous initially, with a fresh document session per job.
+  Translate errors into useful Python exceptions; include the failing operation/target.
+- Do not duplicate report schemas, calculations, business rules or formatting logic
+  across the Python and CLI interfaces. Share the template operations in Rust.
+- Do not expose the entire mutable document model merely to support this report.
+
+## Template correctness
+
+- Preserve the Word-authored styles, table geometry, section settings and headers/footers.
+- Repeated rows and blocks must retain formatting, valid relationships and unique
+  document identifiers. Do not duplicate raw XML without handling its references.
+- Address tagged targets explicitly; fail on ambiguous or missing required targets.
+- Support only the scalar, row/block repetition, optional-block and picture operations
+  needed by the spike. Do not invent a general template expression language.
+- Reuse existing commands when their behavior is sufficient. Add narrow engine
+  operations only for verified gaps and expose them through the existing command registry.
+- Fail clearly for unsupported required features. Do not silently drop content or formatting.
+- Keep template originals unchanged and write generated output only to staging paths.
+
+## Verification and maintenance
+
+Stage 6.5 scope override (user instruction, 6 November 2026): clean-host
+qualification (including Windows without Office) and measured independent
+onboarding are deferred to future adoption testing, not prerequisites for Stage
+6.5 completion or the current bounded-prototype assessment. Preserve their
+unverified limitations and historical evidence. Other verification requirements,
+independent Word review and later production/release criteria remain unchanged.
+
+- Pin the upstream revision and build inputs. Record exact versions and commands.
+- Run applicable upstream checks and focused tests for new operations.
+- Verify installed native wheels and CLI behavior on Windows x64 and Linux x64,
+  initially with CPython 3.12. Do not claim wider platform or Python support without testing.
+- Verify operation without a desktop window or Microsoft Word installed on the
+  generation machine. Use Microsoft Word separately for compatibility review.
+- Check document structure and content, then inspect the resulting DOCX in Word.
+  Wordcraft's own page rendering alone does not prove Word compatibility.
+- Keep the fork patch small and document each upstream gap it addresses.
+- Record failures, unsupported features and measurements in the implementation plan.
+  Do not mark milestones complete based only on documentation or mocked tests.
+
+Inspection, validation and rendering must share target-resolution logic. Keep the engine independent of the report schema and maintain an upstream gap register.
+
+## ArtCraft brand license
+
+Follow `docs/brand/LICENSE-brand.txt` and the ArtCraft section of `docs/wordcraft/LEGAL_IP_POLICY.md`. ArtCraft marks are not covered by the code licenses. Do not alter the marks or use them as FolioRivet branding. Before distributing or publishing an independent modified or derived version, remove or replace the marks, preserve required notices and identify upstream only through permitted plain-text attribution. The upstream-contribution-only fork exception does not authorize independent FolioRivet branding or distribution. Record the artifact review before publication; no publication is currently authorized.

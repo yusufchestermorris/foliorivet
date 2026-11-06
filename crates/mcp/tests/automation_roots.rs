@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! `wordcraft-cli mcp --automation-read-root <dir> --automation-write-root <dir>` (#769): through
 //! the MCP protocol, files open and load only from inside the read root and are saved and
 //! exported only inside the write root; paths that leave a root (`..`, another folder, a sibling
@@ -208,6 +209,7 @@ fn links_out_of_a_root_are_refused() {
 }
 
 /// The names in `dir`, sorted.
+#[cfg(unix)]
 fn names(dir: &Path) -> Vec<String> {
     let mut names: Vec<String> = std::fs::read_dir(dir).unwrap().map(|e| e.unwrap().file_name().to_string_lossy().into_owned()).collect();
     names.sort();

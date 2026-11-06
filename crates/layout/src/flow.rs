@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 use super::boxes::{BoxInput, BoxLayout, Edges, joined, layout_box, push_para};
 use super::cache::has_page_number_fields;
 use super::ctx::Ctx;
@@ -309,7 +310,13 @@ impl<'a> Flow<'a> {
         if !(rp.keep_lines || (rp.keep_next && pb.y + height <= pb.bottom + 0.01)) {
             return before;
         }
-        let need = height + if rp.keep_next { next_first_line(ctx, self.block, self.width, 0, &mut ctx.counters.clone()) } else { 0.0 };
+        let table_spacing = if rp.keep_next && matches!(ctx.doc.body.get(self.block + 1).map(|b| &**b), Some(Block::Table(_))) {
+            rp.space_after.max(0.0)
+        } else {
+            0.0
+        };
+        let need =
+            height + table_spacing + if rp.keep_next { next_first_line(ctx, self.block, self.width, 0, &mut ctx.counters.clone()) } else { 0.0 };
         // (Against the whole column: balanced columns grow to hold it.)
         // With the 0.01 pt of slack the other fit checks take.
         if pb.y + need > pb.bottom + 0.01 && !pb.fresh() && need <= pb.next_room(self.body_top) {
@@ -933,7 +940,41 @@ fn next_first_line(ctx: &mut Ctx, block: usize, width: f32, depth: usize, counte
                     }
             }
         }
-        Some(Block::Table(_)) => 24.0,
+        Some(Block::Table(t)) if t.props.float.is_none() => {
+            // The table paginator moves headers together with the first body row.
+            // A fixed 24pt estimate can strand a kept heading above that move.
+            let t = t.clone();
+            let saved_counters = std::mem::replace(&mut ctx.counters, counters.clone());
+            let eq = ctx.eq_count;
+            let track = std::mem::replace(&mut ctx.track_totals, false);
+            let laid = again(ctx, eq, |ctx| super::table::layout_table(ctx, StoryRef::Body, &t, &[(block + 1) as u32], width, 1));
+            ctx.counters = saved_counters;
+            ctx.track_totals = track;
+            let headers = t.rows.iter().take_while(|r| r.props.header).count();
+            let header_height: f32 = laid.rows.iter().take(headers).map(|r| r.height).sum();
+            let first = t.rows.get(headers).zip(laid.rows.get(headers)).map_or(0.0, |(row, laid)| {
+                if row.props.cant_split || row.props.height_rule == wordcraft_doc::props::HeightRule::Exact {
+                    return laid.height + laid.edge;
+                }
+                // Use the same split predicate as placement, with bounded search
+                // to find enough room to start all cells without clipping text.
+                let mut low = 0.0;
+                let mut high = laid.height;
+                for _ in 0..16 {
+                    let mid = (low + high) * 0.5;
+                    if super::table::split_row_keeping_cells(laid, mid).is_some() {
+                        high = mid;
+                    } else {
+                        low = mid;
+                    }
+                }
+                high.max(row.props.height.filter(|_| row.props.height_rule == wordcraft_doc::props::HeightRule::AtLeast).unwrap_or(0.0))
+                    + laid.edge
+                    + 0.02
+            });
+            t.props.space_before.unwrap_or(0.0).max(0.0) + header_height + first
+        }
+        Some(Block::Table(_)) => 0.0,
         None => 0.0,
     }
 }

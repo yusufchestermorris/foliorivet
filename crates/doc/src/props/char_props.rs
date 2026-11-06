@@ -1,3 +1,5 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
+use super::OoxmlColor;
 use super::color::{Rgb, TextColor};
 use super::para_props::Border;
 use super::{Deserialize, Serialize};
@@ -226,15 +228,30 @@ impl Highlight {
 /// The text size, in points, of a run whose size no style or default sets.
 pub const DEFAULT_FONT_SIZE: f32 = 11.0;
 
+/// Source Latin font attributes, kept apart from the font used for layout.
+#[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct OoxmlFonts {
+    pub ascii: Option<String>,
+    pub high_ansi: Option<String>,
+    pub ascii_theme: Option<String>,
+    pub high_ansi_theme: Option<String>,
+    pub resolved: Option<String>,
+}
+
 /// Character formatting (direct or in a style). `None` = inherit.
 #[derive(Clone, Debug, PartialEq, Default, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct CharProps {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub color_source: Option<OoxmlColor>,
     /// Character style id.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub style: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub font: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub font_source: Option<Box<OoxmlFonts>>,
     /// The symbol's own font (OOXML `w:sym/@w:font`, ECMA-376 §17.3.3.30), set on a symbol
     /// character from a `w:sym` or Insert › Symbol: it is shown in this font whatever `font` is,
     /// so changing the text's font keeps the symbol. `None` = the run's font.
@@ -329,6 +346,11 @@ pub struct CharProps {
     /// inherit, then `font`.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub font_ea: Option<String>,
+    /// Preserved OOXML theme slots. These do not add script-specific font resolution.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub font_ea_theme: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub font_cs_theme: Option<String>,
     /// Complex-script size, points (`w:szCs`). `None` leaves the inherited value unchanged.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub size_cs: Option<f32>,
@@ -479,6 +501,15 @@ pub struct NumChange {
 }
 
 impl CharProps {
+    pub fn set_color(&mut self, color: Option<TextColor>) {
+        self.color_source = None;
+        self.color = color;
+    }
+    /// An explicit font edit replaces imported theme/fallback attributes too.
+    pub fn set_font(&mut self, font: Option<String>) {
+        self.font_source = None;
+        self.font = font;
+    }
     /// The same formatting outside a hyperlink: no link target, and no "Hyperlink" character
     /// style that came with it. What a paragraph mark or text typed next to a link gets.
     pub fn unlinked(&self) -> CharProps {
@@ -500,7 +531,15 @@ impl CharProps {
     }
 
     fn minus_text_style(&mut self, base: &CharProps) {
-        drop_same_fields!(self, base; style, font, sym_font, size, bold, italic, underline, underline_color, strike, double_strike, color, highlight,
+        if self.font == base.font && self.font_source == base.font_source {
+            self.font = None;
+            self.font_source = None;
+        }
+        if self.color == base.color && self.color_source == base.color_source {
+            self.color = None;
+            self.color_source = None;
+        }
+        drop_same_fields!(self, base; style, sym_font, size, bold, italic, underline, underline_color, strike, double_strike, highlight,
             shading, border, vert_align, caps, small_caps, hidden, spacing, scale, position, kern, outline, shadow, emboss, engrave, lang, no_proof, rtl);
     }
 
@@ -509,7 +548,7 @@ impl CharProps {
     }
 
     fn minus_script_style(&mut self, base: &CharProps) {
-        drop_same_fields!(self, base; cs, font_cs, font_ea, size_cs, bold_cs, italic_cs, lang_bidi, lang_ea, east_asian_layout);
+        drop_same_fields!(self, base; cs, font_cs, font_ea, font_cs_theme, font_ea_theme, size_cs, bold_cs, italic_cs, lang_bidi, lang_ea, east_asian_layout);
     }
 
     fn minus_document_marks(&mut self, base: &CharProps) {
@@ -531,7 +570,15 @@ impl CharProps {
     }
 
     fn overlay_text_style(&mut self, patch: &CharProps) {
-        overlay_fields!(self, patch; style, font, sym_font, size, bold, italic, underline, underline_color, strike, double_strike, color, highlight,
+        if patch.font.is_some() || patch.font_source.is_some() {
+            self.font.clone_from(&patch.font);
+            self.font_source.clone_from(&patch.font_source);
+        }
+        if patch.color.is_some() || patch.color_source.is_some() {
+            self.color = patch.color;
+            self.color_source = patch.color_source;
+        }
+        overlay_fields!(self, patch; style, sym_font, size, bold, italic, underline, underline_color, strike, double_strike, highlight,
             shading, border, vert_align, caps, small_caps, hidden, spacing, scale, position, kern, outline, shadow, emboss, engrave, lang, no_proof, rtl);
     }
 
@@ -540,6 +587,12 @@ impl CharProps {
     }
 
     fn overlay_script_style(&mut self, patch: &CharProps) {
+        if patch.font_cs.is_some() || patch.font_cs_theme.is_some() {
+            self.font_cs_theme.clone_from(&patch.font_cs_theme);
+        }
+        if patch.font_ea.is_some() || patch.font_ea_theme.is_some() {
+            self.font_ea_theme.clone_from(&patch.font_ea_theme);
+        }
         overlay_fields!(self, patch; cs, font_cs, font_ea, size_cs, bold_cs, italic_cs, lang_bidi, lang_ea, east_asian_layout);
     }
 

@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Character, paragraph, table and cell properties.
 //!
 //! Every field is an `Option`: `None` means "inherit" (from the style chain, then document
@@ -21,9 +22,11 @@ mod char_props;
 mod color;
 mod para_props;
 mod table_props;
+mod theme;
 
 pub use char_props::{
-    CharProps, CombineBrackets, DEFAULT_FONT_SIZE, EastAsianLayout, EmphasisMark, Highlight, Ligatures, NumChange, PropChange, Underline, VertAlign,
+    CharProps, CombineBrackets, DEFAULT_FONT_SIZE, EastAsianLayout, EmphasisMark, Highlight, Ligatures, NumChange, OoxmlFonts, PropChange, Underline,
+    VertAlign,
 };
 pub use color::{Rgb, TextColor};
 pub use para_props::{Align, Border, BorderStyle, Borders, LineSpacing, NumRef, ParaProps, TAB_POS_EPS, TabAlign, TabLeader, TabStop, TextFrame};
@@ -31,6 +34,7 @@ pub use table_props::{
     CellPicture, CellProps, HeightRule, PictureRepeat, RowProps, TableFloat, TableLook, TableProps, TextDirection, TextVert, VAlign, VMerge,
     anchor_ooxml, valign_from_anchor,
 };
+pub use theme::{OoxmlColor, ThemeSlot};
 
 #[cfg(test)]
 mod tests {
@@ -68,7 +72,7 @@ mod tests {
     fn borders_overlay_per_side() {
         let thin = Border::single(0.5);
         let thick = Border::single(2.0);
-        let nil = Border { style: BorderStyle::None, width: 0.0, color: None, space: 0.0 };
+        let nil = Border { color_source: None, style: BorderStyle::None, width: 0.0, color: None, space: 0.0 };
         let mut b = Borders::all(thin);
         b.overlay(&Borders { top: Some(thick), ..Default::default() });
         assert_eq!(b.top, Some(thick));
@@ -187,6 +191,7 @@ mod tests {
     fn symbol_font_is_optional_in_json_and_survives_font_changes() {
         // Older documents (no `symFont`) still load.
         let old: CharProps = serde_json::from_str(r#"{"font":"Arial"}"#).unwrap();
+        assert!(old.font_source.is_none() && old.color_source.is_none());
         assert_eq!(old.sym_font, None);
         let p = CharProps { font: Some("Arial".into()), sym_font: Some("Wingdings".into()), ..Default::default() };
         let s = serde_json::to_string(&p).unwrap();

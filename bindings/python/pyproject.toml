@@ -1,0 +1,20 @@
+[build-system]
+requires = ["maturin==1.10.2"]
+build-backend = "maturin"
+
+[project]
+name = "foliorivet"
+version = "0.1.0a1"
+description = "Experimental native DOCX templates: scalars, rows, pictures and blocks"
+readme = "README.md"
+classifiers = ["Development Status :: 3 - Alpha", "Programming Language :: Python :: 3.12", "Programming Language :: Rust"]
+requires-python = ">=3.12,<3.13"
+license = "MIT OR Apache-2.0"
+
+[project.urls]
+Repository = "https://github.com/yusufchestermorris/foliorivet"
+Issues = "https://github.com/yusufchestermorris/foliorivet/issues"
+
+[tool.maturin]
+python-source = "python"
+module-name = "foliorivet._native"
