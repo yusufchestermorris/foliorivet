@@ -31,3 +31,19 @@ artifact before output creation. Example ZIP/XML properties, relationship target
 JSON records, PNG metadata and document-only previews were checked for personal
 content; local paths were removed from the public compatibility record.
 These checks do not claim a new Linux full-CI run or clean-host qualification.
+
+## Integration with the fork's newer main branch
+
+The alpha branch incorporates main at 729cd0a5, retaining its 85 newer WordCraft
+commits. README identity, contributor instructions and DOCX test registration
+were resolved together. The isolated binding follows the updated PDF pin; its
+lockfile and dependency/language-data notices match the merged build inputs.
+
+Windows integration checks: all nine cargo xtask ci steps PASS. The rebuilt
+optimized native wheel and matching CLI pass all three public examples. Initial
+checks exposed Windows socket-reset test portability and a temporary paragraph
+size regression; both are covered by regressions without relaxing limits or
+production authentication. Paragraph assembly now reuses finished block allocations.
+WASM checks pass with upstream unused-code warnings. Linux was not rebuilt for
+this integration. The existing alpha tag and PyPI wheels remain at their original
+source revision and are not replaced by this development merge.

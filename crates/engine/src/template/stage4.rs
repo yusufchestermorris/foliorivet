@@ -480,6 +480,7 @@ mod tests {
                     alt: "chart".into(),
                     float: Default::default(),
                     crop: [0.0; 4],
+                    fx: Default::default(),
                     ole: None,
                 },
                 &CharProps::default(),

@@ -1,3 +1,4 @@
+// Modified for FolioRivet: portable Windows socket-close test assertions (2026-11-06).
 //! Loopback JSON-lines control server: one request per line, one reply per line.
 //! This is the transport the MCP server (`wordcraft-cli mcp --connect`) wraps.
 //!
@@ -298,8 +299,24 @@ mod tests {
         /// The server closed the connection.
         fn closed(&mut self) -> bool {
             let mut r = String::new();
-            matches!(self.0.read_line(&mut r), Ok(0))
+            // Winsock can report a rejected peer's closure as a reset instead of EOF.
+            // A timeout or other read error must not make an open connection pass.
+            match self.0.read_line(&mut r) {
+                Ok(0) => true,
+                Err(e) => e.kind() == std::io::ErrorKind::ConnectionReset,
+                Ok(_) => false,
+            }
         }
+    }
+
+    #[test]
+    fn an_authenticated_connection_waiting_for_input_is_not_closed() {
+        let (port, rx) = boot();
+        let mut c = Conn::open(port);
+        assert_eq!(c.call(&format!(r#"{{"id":1,"method":"auth","key":"{KEY}"}}"#))["ok"], true);
+        c.0.get_mut().set_read_timeout(Some(Duration::from_millis(40))).unwrap();
+        assert!(!c.closed(), "a read timeout is not a closed connection");
+        assert!(rx.try_recv().is_err());
     }
 
     #[test]

@@ -1,5 +1,5 @@
 {
-  "scope": "Input metadata package set; build dependencies may be included; not a binary SBOM",
+  "scope": "Windows/Linux binding normal/build declaration superset; includes previously recorded permissive notices; not a binary SBOM",
   "packages": [
     {
       "name": "adler2",
@@ -647,17 +647,20 @@
         {
           "file": "00-LICENSE-APACHE",
           "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
-          "source": "git+https://github.com/storytold/craft-libs?rev=92d392cff132eaf53e13afff77f38b5c11b73aa0#92d392cff132eaf53e13afff77f38b5c11b73aa0"
+          "source": "git+https://github.com/storytold/craft-libs?rev=c5a1cbfb5f9049f9270955caffb5bee5997aebf7#c5a1cbfb5f9049f9270955caffb5bee5997aebf7",
+          "source_file": "LICENSE-APACHE"
         },
         {
           "file": "01-LICENSE-MIT",
           "sha256": "2f42c0cafc8ad394d91373fe1f342aee5453850b151a51405c68cae9ada86d26",
-          "source": "git+https://github.com/storytold/craft-libs?rev=92d392cff132eaf53e13afff77f38b5c11b73aa0#92d392cff132eaf53e13afff77f38b5c11b73aa0"
+          "source": "git+https://github.com/storytold/craft-libs?rev=c5a1cbfb5f9049f9270955caffb5bee5997aebf7#c5a1cbfb5f9049f9270955caffb5bee5997aebf7",
+          "source_file": "LICENSE-MIT"
         },
         {
           "file": "02-NOTICE",
-          "sha256": "35c64da07565fe858d6988d5561695f5cb1364583119b4d9f7ca876b916e9338",
-          "source": "git+https://github.com/storytold/craft-libs?rev=92d392cff132eaf53e13afff77f38b5c11b73aa0#92d392cff132eaf53e13afff77f38b5c11b73aa0"
+          "sha256": "b0a52617abba6f559c79cc18f4deafc6c8463b4ed92bfd235db4f2b56044e73e",
+          "source": "git+https://github.com/storytold/craft-libs?rev=c5a1cbfb5f9049f9270955caffb5bee5997aebf7#c5a1cbfb5f9049f9270955caffb5bee5997aebf7",
+          "source_file": "NOTICE"
         }
       ],
       "review": "texts collected; inclusion and obligations require review"
@@ -1437,6 +1440,26 @@
       "review": "texts collected; inclusion and obligations require review"
     },
     {
+      "name": "iana-time-zone",
+      "version": "0.1.65",
+      "declared_license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "file": "00-LICENSE-APACHE",
+          "sha256": "696759d65dfe558ff7d9f031c76db19ec5c0767470fb67c4e8d990820d1e99c9",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "source_file": "LICENSE-APACHE"
+        },
+        {
+          "file": "01-LICENSE-MIT",
+          "sha256": "da28ccc6b158fc2d8cccc74e99794b1cff1d29bd7bbeb019442fcf0c04c6cad9",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "source_file": "LICENSE-MIT"
+        }
+      ],
+      "review": "texts collected; inclusion and obligations require review"
+    },
+    {
       "name": "image",
       "version": "0.25.10",
       "declared_license": "MIT OR Apache-2.0",
@@ -1565,17 +1588,20 @@
         {
           "file": "00-LICENSE-APACHE",
           "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594",
-          "source": "git+https://github.com/storytold/craft-libs?rev=92d392cff132eaf53e13afff77f38b5c11b73aa0#92d392cff132eaf53e13afff77f38b5c11b73aa0"
+          "source": "git+https://github.com/storytold/craft-libs?rev=c5a1cbfb5f9049f9270955caffb5bee5997aebf7#c5a1cbfb5f9049f9270955caffb5bee5997aebf7",
+          "source_file": "LICENSE-APACHE"
         },
         {
           "file": "01-LICENSE-MIT",
           "sha256": "2f42c0cafc8ad394d91373fe1f342aee5453850b151a51405c68cae9ada86d26",
-          "source": "git+https://github.com/storytold/craft-libs?rev=92d392cff132eaf53e13afff77f38b5c11b73aa0#92d392cff132eaf53e13afff77f38b5c11b73aa0"
+          "source": "git+https://github.com/storytold/craft-libs?rev=c5a1cbfb5f9049f9270955caffb5bee5997aebf7#c5a1cbfb5f9049f9270955caffb5bee5997aebf7",
+          "source_file": "LICENSE-MIT"
         },
         {
           "file": "02-NOTICE",
-          "sha256": "35c64da07565fe858d6988d5561695f5cb1364583119b4d9f7ca876b916e9338",
-          "source": "git+https://github.com/storytold/craft-libs?rev=92d392cff132eaf53e13afff77f38b5c11b73aa0#92d392cff132eaf53e13afff77f38b5c11b73aa0"
+          "sha256": "b0a52617abba6f559c79cc18f4deafc6c8463b4ed92bfd235db4f2b56044e73e",
+          "source": "git+https://github.com/storytold/craft-libs?rev=c5a1cbfb5f9049f9270955caffb5bee5997aebf7#c5a1cbfb5f9049f9270955caffb5bee5997aebf7",
+          "source_file": "NOTICE"
         }
       ],
       "review": "texts collected; inclusion and obligations require review"
@@ -3073,6 +3099,26 @@
           "file": "01-LICENSE-MIT",
           "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
           "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "review": "texts collected; inclusion and obligations require review"
+    },
+    {
+      "name": "toml_writer",
+      "version": "1.1.2+spec-1.1.0",
+      "declared_license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "file": "00-LICENSE-APACHE",
+          "sha256": "c6596eb7be8581c18be736c846fb9173b69eccf6ef94c5135893ec56bd92ba08",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "source_file": "LICENSE-APACHE"
+        },
+        {
+          "file": "01-LICENSE-MIT",
+          "sha256": "6efb0476a1cc085077ed49357026d8c173bf33017278ef440f222fb9cbcb66e6",
+          "source": "registry+https://github.com/rust-lang/crates.io-index",
+          "source_file": "LICENSE-MIT"
         }
       ],
       "review": "texts collected; inclusion and obligations require review"
