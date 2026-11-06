@@ -1,3 +1,11 @@
+<!-- Modified for FolioRivet: bounded fidelity repairs; upstream parity retained (2026-11-06). -->
+> **FolioRivet:** the fork adds tested preservation of theme-font/fallback slots,
+> theme colors, level-only numbering and independent gallery flags, plus bounded
+> scalar/row/picture/repeat/conditional content-control operations. Upstream parity
+> scores below are unchanged. See [alpha scope](release/STATUS.md) and the committed
+> Rust fidelity/template regressions and synthetic examples. These do not establish
+> universal OOXML preservation or production compatibility.
+
 # File-format parity with Microsoft Word
 > **2026-11-05:** DOCX paragraph `w:adjustRightInd` keeps its default and explicit values through style resolution and schema-ordered repeated saves.
 

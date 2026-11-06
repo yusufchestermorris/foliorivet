@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Table Layout › Draw: Draw Table and Eraser. A pen stroke on a page either draws a new one-cell
 //! table (a rectangle outside any table) or splits the cells a straight line crosses; the eraser
 //! removes the border nearest a point by merging the two cells beside it. Coordinates are page
@@ -228,7 +229,8 @@ fn aligned_rows(t: &Table, a: &Logical, b: &Logical) -> Option<(usize, usize)> {
 /// `vertical`: the line sits left of grid column `line` and the edge covers rows `lo..=hi`;
 /// otherwise it sits above row `line` and covers grid columns `lo..hi`.
 fn hide_edge(t: &mut Table, vertical: bool, line: usize, (lo, hi): (usize, usize)) {
-    let nil = wordcraft_doc::props::Border { style: wordcraft_doc::props::BorderStyle::None, width: 0.0, color: None, space: 0.0 };
+    let nil =
+        wordcraft_doc::props::Border { color_source: None, style: wordcraft_doc::props::BorderStyle::None, width: 0.0, color: None, space: 0.0 };
     // Only a cell whose edge lies on the line is touched.
     let set_v = |t: &mut Table, r: usize, g: usize, before: bool| {
         let Some(ci) = t.cell_at_grid(r, g) else { return };

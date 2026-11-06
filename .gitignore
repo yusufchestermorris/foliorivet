@@ -8,3 +8,42 @@ plan/
 /.claude/
 /target-*/
 /craft-fonts/
+/site/
+
+# Private historical evidence junction; excluded from public source.
+/docs/wordcraft/evidence/
+
+# Python bytecode is local build output.
+__pycache__/
+*.py[cod]
+
+# Local qualification history and machine-specific convenience scripts.
+/docs/wordcraft/
+/docs/release/0.1.0-preparation.md
+/docs/release/PREVIEW-VALIDATION.md
+/docs/release/brand-removal.json
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+/tools/release/build-local-windows.ps1
+/tools/release/build-local-linux.sh
+/tools/release/test-local-linux.sh
+/tools/release/test-preview-linux.sh
+/tools/release/package_local_cli.py
+/tools/release/export_source.py
+/bindings/python/tests/audit_manual_review.py
+/bindings/python/tests/collect_notices.py
+/bindings/python/tests/finalize_evidence.py
+/bindings/python/tests/make_scalar_fixture.py
+/bindings/python/tests/stage4_finalize.py
+/bindings/python/tests/stage4_fixtures.py
+/bindings/python/tests/stage4_invoice_refresh.py
+/bindings/python/tests/stage4_manual_review.py
+/bindings/python/tests/stage4_smoke.py
+/bindings/python/tests/stage5_manual_review.py
+/bindings/python/tests/stage5_smoke.py
+
+# Optional public build input checkout.
+/.deps/

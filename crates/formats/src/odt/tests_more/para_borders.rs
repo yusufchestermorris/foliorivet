@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Paragraph borders, their padding and background (ODF 1.3 §20.182 `fo:background-color`,
 //! §20.183 `fo:border*`, §20.217–20.221 `fo:padding*` on `style:paragraph-properties`).
 
@@ -63,7 +64,7 @@ fn an_empty_paragraph_with_only_a_bottom_border_is_still_a_rule() {
 
 #[test]
 fn borders_and_background_round_trip() {
-    let line = Border { style: BorderStyle::Double, width: 1.5, color: Some(Rgb(200, 0, 0)), space: 3.0 };
+    let line = Border { color_source: None, style: BorderStyle::Double, width: 1.5, color: Some(Rgb(200, 0, 0)), space: 3.0 };
     let want = ParaProps {
         borders: Some(Borders { top: Some(line), left: Some(line), bottom: Some(line), right: Some(line), ..Default::default() }),
         shading: Some(Rgb(255, 255, 204)),

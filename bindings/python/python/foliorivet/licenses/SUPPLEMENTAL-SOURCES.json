@@ -1,0 +1,14 @@
+[
+  {
+    "package": "wuff",
+    "revision": "78e67f52713c0a2c36bd083fea18ba029565c9ec",
+    "source": "https://raw.githubusercontent.com/nicoburns/wuff/78e67f52713c0a2c36bd083fea18ba029565c9ec/LICENSE",
+    "sha256": "4b373ba4395e35d44ba1f41202c179b57ca3c5ba5e4a1aaafa1547aede7e1eb7"
+  },
+  {
+    "package": "alloc-stdlib",
+    "revision": "ae42d22078b98549e987d2f03d12df7b984fde47",
+    "source": "https://raw.githubusercontent.com/dropbox/rust-alloc-no-stdlib/ae42d22078b98549e987d2f03d12df7b984fde47/LICENSE",
+    "sha256": "c0c56f26d9c051cac4d200c34c84e7ae9aaa853e01a982a1df08b09931e518ae"
+  }
+]

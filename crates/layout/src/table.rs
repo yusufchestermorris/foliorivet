@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Table layout: column widths, cell boxes, row heights, merged cells, borders and shading,
 //! table-style conditional formatting. Rows are laid out as free-standing boxes; pagination
 //! moves whole rows or splits them between lines (`split_row`).
@@ -129,7 +130,12 @@ fn table_style(ctx: &Ctx, t: &Table) -> Option<TableStyleProps> {
 
 /// The table's default cell margins: its own, else its style's, else Word's.
 fn default_margins(t: &Table, style: Option<&TableStyleProps>) -> [f32; 4] {
-    t.props.cell_margins.or(style.and_then(|s| s.parts.cell_margins)).unwrap_or(DEFAULT_MARGINS)
+    let defaults = style.map_or(DEFAULT_MARGINS, |s| {
+        let p = &s.parts;
+        p.cell_margins
+            .unwrap_or_else(|| p.partial_cell_margins.map_or(DEFAULT_MARGINS, |m| std::array::from_fn(|i| m[i].unwrap_or(DEFAULT_MARGINS[i]))))
+    });
+    t.props.resolved_cell_margins(defaults)
 }
 
 /// The margins (top, left, bottom, right; points) of cell `cell` of row `row`: its own, else the
@@ -139,7 +145,14 @@ fn default_margins(t: &Table, style: Option<&TableStyleProps>) -> [f32; 4] {
 pub fn cell_margins(doc: &wordcraft_doc::Document, t: &Table, row: usize, cell: usize) -> [f32; 4] {
     let style = t.props.style.as_deref().and_then(|id| doc.styles.table_style(id));
     let defaults = default_margins(t, style.as_ref());
-    t.rows.get(row).and_then(|r| r.cells.get(cell)).map_or(defaults, |cell| cell.props.resolved_margins(defaults))
+    t.rows.get(row).map_or(defaults, |r| {
+        let defaults = row_margins(r, defaults);
+        r.cells.get(cell).map_or(defaults, |c| c.props.resolved_margins(defaults))
+    })
+}
+
+fn row_margins(row: &wordcraft_doc::table::Row, defaults: [f32; 4]) -> [f32; 4] {
+    row.props.exceptions.as_ref().map_or(defaults, |p| p.resolved_cell_margins(defaults))
 }
 
 /// The most paragraphs [`measure_table_columns`] lays out: a huge table is measured by its first
@@ -208,6 +221,7 @@ pub fn measure_table_columns(doc: &wordcraft_doc::Document, t: &Table) -> Vec<(f
     let mut spanned: Vec<(usize, usize, f32, f32)> = Vec::new();
     let mut budget = MEASURE_BUDGET;
     'rows: for (ri, row) in t.rows.iter().enumerate() {
+        let margins_def = row_margins(row, margins_def);
         let mut g = row.first_grid();
         for cell in &row.cells {
             let span = cell.span();
@@ -317,7 +331,10 @@ pub(crate) fn first_cell_left_margin(ctx: &Ctx, t: &Table) -> f32 {
 }
 
 fn first_cell_left_margin_in(t: &Table, def: [f32; 4]) -> f32 {
-    t.rows.first().and_then(|r| r.cells.first()).map_or(def, |cell| cell.props.resolved_margins(def))[1]
+    t.rows.first().map_or(def, |r| {
+        let def = row_margins(r, def);
+        r.cells.first().map_or(def, |c| c.props.resolved_margins(def))
+    })[1]
 }
 
 /// What a table style gives the cells in one set of parts: shading, vertical alignment and each
@@ -498,6 +515,7 @@ pub fn layout_table(ctx: &mut Ctx, story: StoryRef, t: &Table, path: &[u32], ava
     let mut bottoms: Vec<f32> = Vec::with_capacity(nrows);
     let mut edges: Vec<f32> = Vec::with_capacity(nrows);
     for (ri, row) in t.rows.iter().enumerate() {
+        let margins_def = row_margins(row, margins_def);
         let mut g = row.first_grid();
         let mut cells = Vec::with_capacity(row.cells.len());
         let mut rh = 0.0f32;
@@ -1368,6 +1386,7 @@ fn column_content(ctx: &mut Ctx, t: &Table, style: Option<&TableStyleProps>, dep
     let mut spanning = Vec::new();
     let mut any = false;
     for (ri, row) in t.rows.iter().enumerate() {
+        let margins_def = row_margins(row, margins_def);
         let mut g = row.first_grid();
         for cell in &row.cells {
             let span = cell.span();

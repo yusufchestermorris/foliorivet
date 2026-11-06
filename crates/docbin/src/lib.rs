@@ -1,3 +1,4 @@
+// Modified for FolioRivet: allocate finished paragraph blocks once during binary-document import (2026-11-06).
 //! WordCraft reader for the Word 97-2003 binary file format (`.doc`, [MS-DOC]).
 //!
 //! [`read`] turns the bytes of a `.doc` file into a [`wordcraft_doc::Document`]. There is no
@@ -36,7 +37,7 @@ use wordcraft_doc::props::CharProps;
 use wordcraft_doc::props::NumRef;
 use wordcraft_doc::section::HeaderSet;
 use wordcraft_doc::styles::StyleSheet;
-use wordcraft_doc::{Document, PartKind};
+use wordcraft_doc::{Document, PartKind, para_block};
 
 use fkp::Bins;
 use piece::{PieceTable, PrmRef};
@@ -54,8 +55,9 @@ const MAX_TOTAL_CHARS: u64 = 64 << 20;
 /// Most paragraph and cell marks across every story walk of one document. The character
 /// budget does not see them: a mark is one byte of the file but about 1 KB of document, so a
 /// file of nothing but marks would grow memory about a thousand times faster than its size.
-/// The cap bounds a flood to about 2 GB while reading (about 4 GB at the very cap, when the
-/// blocks are assembled). Past it the read fails with [`DocbinError::Limit`]. Real documents stay far below it:
+/// The cap bounds the paragraph flood to a few GB; finished blocks are shared with the
+/// result so assembly does not allocate a second full set while the work vector remains.
+/// Past it the read fails with [`DocbinError::Limit`]. Real documents stay far below it:
 /// 50 paragraphs on each of 10,000 pages is 500,000, and a 10,000-page one-column table (46
 /// rows, each a cell mark plus a row mark) is about 920,000.
 const MAX_PARAGRAPHS: usize = 2_000_000;
@@ -397,8 +399,10 @@ fn read_limited(bytes: &[u8], password: Option<&str>, max_paragraphs: usize) -> 
         if is_final {
             continue; // handled below through `last`
         }
-        if let Some(p) = ending.get(&sec.end_cp).and_then(|&i| paras.get_mut(i)) {
-            p.para.section = Some(Box::new(props));
+        if let Some(p) = ending.get(&sec.end_cp).and_then(|&i| paras.get_mut(i))
+            && let wordcraft_doc::Block::Para(para) = Arc::make_mut(&mut p.block)
+        {
+            para.section = Some(Box::new(props));
         }
     }
     if let Some(mut l) = last {
@@ -625,14 +629,14 @@ fn walk<'a>(ctx: &WalkCtx<'a>, cp_start: u32, cp_end: u32, pics: &mut media::Pic
                 pb.mark = char_props(ctx.chpx_bins.chpx(ctx.word, fc), ctx.fonts, &CharProps::default());
                 let done = std::mem::take(&mut pb);
                 out.push(ParaOut {
-                    para: Paragraph {
+                    block: para_block(Paragraph {
                         text: done.text,
                         runs: done.runs,
                         props: done.props,
                         mark: done.mark,
                         objects: done.objects,
                         ..Default::default()
-                    },
+                    }),
                     end_cp: cp.saturating_add(1),
                     row,
                 });
@@ -731,7 +735,14 @@ fn walk<'a>(ctx: &WalkCtx<'a>, cp_start: u32, cp_end: u32, pics: &mut media::Pic
     if !pb.text.is_empty() {
         let done = pb;
         out.push(ParaOut {
-            para: Paragraph { text: done.text, runs: done.runs, props: done.props, mark: done.mark, objects: done.objects, ..Default::default() },
+            block: para_block(Paragraph {
+                text: done.text,
+                runs: done.runs,
+                props: done.props,
+                mark: done.mark,
+                objects: done.objects,
+                ..Default::default()
+            }),
             end_cp: cp_end,
             row: None,
         });

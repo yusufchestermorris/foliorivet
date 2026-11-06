@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Command implementations, one module per area. Each module exposes `specs()`.
 
 pub mod accessibility;
@@ -106,6 +107,7 @@ pub fn registry() -> Registry {
     v.extend(protect::specs());
     v.extend(speech::specs());
     v.extend(controls::specs());
+    v.extend(crate::template::specs());
     Registry::new(v)
 }
 

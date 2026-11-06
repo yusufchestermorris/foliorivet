@@ -1,9 +1,24 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! File format dispatch by extension. Format crates plug in here.
 
 use wordcraft_doc::Document;
 
 #[cfg(not(target_arch = "wasm32"))]
 mod safe_save;
+
+/// FolioRivet staging write: refuse existing entries, including symlinks. A write
+/// failure may leave an incomplete file, which the caller must discard.
+#[cfg(not(target_arch = "wasm32"))]
+pub fn write_new_file(path: &str, bytes: &[u8]) -> Result<(), String> {
+    use std::io::Write;
+    crate::file_access::check_write(path)?;
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(path)
+        .map_err(|e| format!("choose a new staging path with an existing parent directory: {e}"))?;
+    file.write_all(bytes).and_then(|()| file.sync_all()).map_err(|e| format!("write failed; discard incomplete staging output: {e}"))
+}
 
 /// Formats WordCraft opens.
 pub const OPEN_EXTS: &[&str] = &[

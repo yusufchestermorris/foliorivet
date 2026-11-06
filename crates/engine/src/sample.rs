@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Built-in sample documents and templates (original text, generated in code).
 
 use std::sync::Arc;
@@ -130,7 +131,7 @@ pub fn sample_document() -> Document {
     d.last_section.footers.default = Some(fid);
     let mut hd = styled("The Open Studio Handbook\t\tSpring edition", "Header");
     hd.props.borders = Some(Borders {
-        bottom: Some(Border { style: BorderStyle::Single, width: 0.5, color: Some(Rgb(0xBF, 0xBF, 0xBF)), space: 4.0 }),
+        bottom: Some(Border { color_source: None, style: BorderStyle::Single, width: 0.5, color: Some(Rgb(0xBF, 0xBF, 0xBF)), space: 4.0 }),
         ..Default::default()
     });
     let hid = d.add_part(PartKind::Header, vec![para_block(hd)]);

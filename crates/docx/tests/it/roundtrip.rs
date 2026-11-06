@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Round-trip tests: build documents programmatically → write → read → compare.
 
 use std::sync::Arc;
@@ -70,6 +71,8 @@ fn tiny_png() -> Vec<u8> {
 #[test]
 fn every_char_prop_round_trips() {
     let all = CharProps {
+        font_source: None,
+        color_source: None,
         style: Some("Strong".into()),
         font: Some("Georgia".into()),
         // The symbol's own font: the run is written as `w:sym` characters (#2036).
@@ -84,7 +87,7 @@ fn every_char_prop_round_trips() {
         color: Some(TextColor::Rgb(Rgb(0xAA, 0x10, 0x20))),
         highlight: Some(Highlight::Turquoise),
         shading: Some(Rgb(0xEE, 0xEE, 0x00)),
-        border: Some(Border { style: BorderStyle::Double, width: 1.5, color: Some(Rgb(0xC0, 0, 0)), space: 2.0 }),
+        border: Some(Border { color_source: None, style: BorderStyle::Double, width: 1.5, color: Some(Rgb(0xC0, 0, 0)), space: 2.0 }),
         vert_align: Some(VertAlign::Superscript),
         caps: Some(true),
         small_caps: Some(false),
@@ -128,6 +131,8 @@ fn every_char_prop_round_trips() {
         cs: Some(true),
         font_cs: Some("B Nazanin".into()),
         font_ea: Some("宋体".into()),
+        font_ea_theme: Some("majorEastAsia".into()),
+        font_cs_theme: Some("minorBidi".into()),
         size_cs: Some(13.0),
         bold_cs: Some(false),
         italic_cs: Some(true),
@@ -159,7 +164,7 @@ fn every_char_prop_round_trips() {
 
 #[test]
 fn every_para_prop_round_trips() {
-    let b = Border { style: BorderStyle::Double, width: 0.75, color: Some(Rgb(9, 8, 7)), space: 4.0 };
+    let b = Border { color_source: None, style: BorderStyle::Double, width: 0.75, color: Some(Rgb(9, 8, 7)), space: 4.0 };
     let pp = ParaProps {
         style: Some("Heading1".into()),
         align: Some(Align::Justify),
@@ -264,6 +269,7 @@ fn styles_and_lists_round_trip() {
         priority: Some(5),
         quick: true,
         hidden: false,
+        ooxml: None,
         builtin: false,
         locked: true,
         default: false,
@@ -328,7 +334,8 @@ fn tables_with_merges_round_trip() {
         c.props.margins = Some([2.0, 3.0, 4.0, 5.0]);
         c.props.width = None;
         c.props.width_pct = Some(40.0);
-        c.props.borders = Some(Borders::box_(Border { style: BorderStyle::Dashed, width: 1.0, color: Some(Rgb(0, 0, 255)), space: 0.0 }));
+        c.props.borders =
+            Some(Borders::box_(Border { color_source: None, style: BorderStyle::Dashed, width: 1.0, color: Some(Rgb(0, 0, 255)), space: 0.0 }));
         c.blocks = vec![para_block(Paragraph::with_text("red", CharProps::default()))];
     }
     // Nested table in a cell (followed by the required paragraph).
@@ -571,7 +578,7 @@ fn table_style_formatting_round_trips() {
         header_borders: Some(Borders::all(Border::single(1.5))),
         band_fill: Some(Rgb(0xF2, 0xF2, 0xF2)),
         band_chr: CharProps { bold: Some(true), color: Some(TextColor::Rgb(Rgb(0, 0x70, 0xC0))), ..Default::default() },
-        band_borders: Some(Borders::box_(Border { style: BorderStyle::None, width: 0.0, color: None, space: 0.0 })),
+        band_borders: Some(Borders::box_(Border { color_source: None, style: BorderStyle::None, width: 0.0, color: None, space: 0.0 })),
         band_size: Some(3),
         ..Default::default()
     };
@@ -617,9 +624,9 @@ fn every_table_style_part_round_trips() {
             },
             fill: Some(Rgb(0x10 + n, 0x80, 0xF0 - n)),
             borders: Some(Borders {
-                top: Some(Border { style: BorderStyle::Double, width: 1.5, color: Some(Rgb(n, 0, 0)), space: 0.0 }),
+                top: Some(Border { color_source: None, style: BorderStyle::Double, width: 1.5, color: Some(Rgb(n, 0, 0)), space: 0.0 }),
                 bottom: Some(Border::single(0.5 + i as f32 / 4.0)),
-                left: Some(Border { style: BorderStyle::None, width: 0.0, color: None, space: 0.0 }),
+                left: Some(Border { color_source: None, style: BorderStyle::None, width: 0.0, color: None, space: 0.0 }),
                 inside_v: (i % 2 == 1).then(|| Border::single(0.25)),
                 ..Default::default()
             }),

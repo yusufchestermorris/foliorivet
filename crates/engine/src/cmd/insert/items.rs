@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 use super::header_footer::hf_part;
 use super::{
     Align, Block, CharProps, CmdError, CmdResult, InlineObject, Paragraph, Rgb, Selection, Session, StoryRef, TabAlign, TabStop, TextColor, Value,
@@ -177,7 +178,7 @@ pub(super) fn symbol(s: &mut Session, v: &Value) -> CmdResult {
         if u32::from(ch) <= 0xFFFF && (font_is_symbol || private_use) {
             props.sym_font = Some(font.to_string());
         } else {
-            props.font = Some(font.to_string());
+            props.set_font(Some(font.to_string()));
         }
         s.pending = Some(props);
         r = type_text(s, ch.encode_utf8(&mut buf));
@@ -218,7 +219,13 @@ pub(super) fn cover_page(s: &mut Session, v: &Value) -> CmdResult {
     let mut t =
         Paragraph::with_text(&title, CharProps { size: Some(44.0), color: Some(TextColor::Rgb(accent)), ..Default::default() }).styled("Title");
     t.props.borders = Some(wordcraft_doc::props::Borders {
-        bottom: Some(wordcraft_doc::props::Border { style: wordcraft_doc::props::BorderStyle::Single, width: 2.0, color: Some(accent), space: 6.0 }),
+        bottom: Some(wordcraft_doc::props::Border {
+            color_source: None,
+            style: wordcraft_doc::props::BorderStyle::Single,
+            width: 2.0,
+            color: Some(accent),
+            space: 6.0,
+        }),
         ..Default::default()
     });
     blocks.push(Block::Para(t));
@@ -298,7 +305,7 @@ pub(super) fn drop_cap(s: &mut Session, v: &Value) -> CmdResult {
         p.drop_cap_margin = (!none && margin).then_some(true);
         let d = if own && !distance_given { p.drop_cap_distance.unwrap_or(0.0) } else { distance };
         p.drop_cap_distance = (!none && d > 0.0).then_some(d);
-        if !(own && !font_given) {
+        if !own || font_given {
             p.drop_cap_font = font.clone().filter(|_| !none);
         }
     })

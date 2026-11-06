@@ -1,3 +1,4 @@
+// Modified for FolioRivet: verify bounded temporary records reuse the final paragraph allocation (2026-11-06).
 //! Synthetic `.doc` fixtures, written for these tests from the [MS-DOC] specification.
 //! Files produced by Word are never committed; every fixture here is built in code.
 
@@ -328,6 +329,15 @@ fn the_paragraph_cap_leaves_room_and_a_paragraph_stays_small() {
     assert!(std::mem::size_of::<crate::table::ParaOut>() < 1000, "{}", std::mem::size_of::<crate::table::ParaOut>());
     let doc = read(&marks_doc('\r', 10)).expect("opens");
     assert_eq!(doc.body.len(), 10);
+}
+
+#[test]
+fn paragraph_assembly_reuses_the_finished_block_allocation() {
+    let block = wordcraft_doc::para_block(wordcraft_doc::Paragraph::new());
+    let original = std::sync::Arc::clone(&block);
+    let blocks = crate::table::assemble(vec![crate::table::ParaOut { block, end_cp: 1, row: None }]);
+    assert_eq!(blocks.len(), 1);
+    assert!(std::sync::Arc::ptr_eq(&blocks[0], &original));
 }
 
 #[test]

@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Property writers, in ECMA-376 schema element order.
 
 use wordcraft_doc::props::{
@@ -21,14 +22,21 @@ fn round(v: f32) -> i64 {
     v.round().clamp(-1e9, 1e9) as i64
 }
 
-/// `w:rPr` content (without the wrapper). Link and revision marks are not run properties.
-pub fn rpr_inner(w: &mut W, c: &CharProps) {
-    if let Some(s) = &c.style {
-        w.val("w:rStyle", s);
-    }
+fn write_fonts(w: &mut W, c: &CharProps) {
     // Emit only explicit properties so absent values keep inheriting from the style chain.
     let mut fonts: Vec<(&str, &str)> = Vec::new();
-    if let Some(f) = &c.font {
+    if let Some(source) = c.font_source.as_deref().filter(|s| s.resolved == c.font) {
+        for (attr, value) in [
+            ("w:ascii", &source.ascii),
+            ("w:hAnsi", &source.high_ansi),
+            ("w:asciiTheme", &source.ascii_theme),
+            ("w:hAnsiTheme", &source.high_ansi_theme),
+        ] {
+            if let Some(value) = value {
+                fonts.push((attr, value));
+            }
+        }
+    } else if let Some(f) = &c.font {
         fonts.extend([("w:ascii", f.as_str()), ("w:hAnsi", f.as_str())]);
     }
     if let Some(ea) = &c.font_ea {
@@ -37,9 +45,23 @@ pub fn rpr_inner(w: &mut W, c: &CharProps) {
     if let Some(cs) = &c.font_cs {
         fonts.push(("w:cs", cs));
     }
+    if let Some(ea) = &c.font_ea_theme {
+        fonts.push(("w:eastAsiaTheme", ea));
+    }
+    if let Some(cs) = &c.font_cs_theme {
+        fonts.push(("w:cstheme", cs));
+    }
     if !fonts.is_empty() {
         w.empty("w:rFonts", &fonts);
     }
+}
+
+/// `w:rPr` content (without the wrapper). Link and revision marks are not run properties.
+pub fn rpr_inner(w: &mut W, c: &CharProps) {
+    if let Some(s) = &c.style {
+        w.val("w:rStyle", s);
+    }
+    write_fonts(w, c);
     toggle(w, "w:b", c.bold);
     toggle(w, "w:bCs", c.bold_cs);
     toggle(w, "w:i", c.italic);
@@ -56,10 +78,10 @@ pub fn rpr_inner(w: &mut W, c: &CharProps) {
     toggle(w, "w:snapToGrid", c.snap_to_grid);
     toggle(w, "w:vanish", c.hidden);
     toggle(w, "w:webHidden", c.web_hidden);
-    match c.color {
-        Some(TextColor::Auto) => w.val("w:color", "auto"),
-        Some(TextColor::Rgb(rgb)) => w.val("w:color", &rgb.hex()),
-        None => {}
+    let attrs = color_attrs("w:val", c.color, c.color_source);
+    if !attrs.is_empty() {
+        let refs: Vec<_> = attrs.iter().map(|(k, v)| (*k, v.as_str())).collect();
+        w.empty("w:color", &refs);
     }
     if let Some(s) = c.spacing {
         w.val("w:spacing", &twips(s.clamp(-1584.0, 1584.0)));
@@ -212,12 +234,40 @@ pub fn tab_leader(l: TabLeader) -> &'static str {
     }
 }
 
+fn color_attrs(value: &'static str, color: Option<TextColor>, source: Option<wordcraft_doc::props::OoxmlColor>) -> Vec<(&'static str, String)> {
+    let format = |c| match c {
+        TextColor::Auto => "auto".into(),
+        TextColor::Rgb(rgb) => rgb.hex(),
+    };
+    let mut attrs = Vec::new();
+    if let Some(source) = source.filter(|s| s.resolved == color) {
+        if let Some(fallback) = source.fallback {
+            attrs.push((value, format(fallback)));
+        }
+        attrs.push(("w:themeColor", source.slot.name().into()));
+        if let Some(tint) = source.tint {
+            attrs.push(("w:themeTint", format!("{tint:02X}")));
+        }
+        if let Some(shade) = source.shade {
+            attrs.push(("w:themeShade", format!("{shade:02X}")));
+        }
+    } else if let Some(color) = color {
+        attrs.push((value, format(color)));
+    }
+    attrs
+}
+
 fn border_el(w: &mut W, name: &str, b: &Border) {
     let sz = n(round(b.width.clamp(0.0, 12.0) * 8.0));
     let space = n(round(b.space.clamp(0.0, 31.0)));
-    let color = b.color.map(|c| c.hex()).unwrap_or_else(|| "auto".into());
     let style = if b.style == BorderStyle::None { "nil" } else { b.style.ooxml() };
-    w.empty(name, &[("w:val", style), ("w:sz", &sz), ("w:space", &space), ("w:color", &color)]);
+    let colors = color_attrs("w:color", b.color.map(TextColor::Rgb), b.color_source);
+    let mut attrs = vec![("w:val", style), ("w:sz", sz.as_str()), ("w:space", space.as_str())];
+    attrs.extend(colors.iter().map(|(k, v)| (*k, v.as_str())));
+    if colors.is_empty() {
+        attrs.push(("w:color", "auto"));
+    }
+    w.empty(name, &attrs);
 }
 
 /// Borders element. `inner` names the between/insideH element (`w:between` for paragraphs,
@@ -253,6 +303,10 @@ pub fn borders(w: &mut W, tag: &str, b: &Borders, inner: Option<&str>, extra: &[
 /// `w:pPr` content (without the wrapper); `num_change` are the attributes of a tracked list
 /// numbering change (`w:numberingChange`, written in `w:numPr`).
 pub fn ppr_inner(w: &mut W, p: &ParaProps, framed: bool, num_change: Option<&ChangeAttrs>) {
+    ppr_inner_level(w, p, framed, num_change, None);
+}
+
+pub fn ppr_inner_level(w: &mut W, p: &ParaProps, framed: bool, num_change: Option<&ChangeAttrs>, level_only: Option<u8>) {
     if let Some(s) = &p.style {
         w.val("w:pStyle", s);
     }
@@ -261,7 +315,11 @@ pub fn ppr_inner(w: &mut W, p: &ParaProps, framed: bool, num_change: Option<&Cha
     toggle(w, "w:pageBreakBefore", p.page_break_before);
     write_frame(w, p, framed);
     toggle(w, "w:widowControl", p.widow_control);
-    if let Some(nr) = p.numbering {
+    if let Some(level) = level_only {
+        w.open("w:numPr", &[]);
+        w.val("w:ilvl", &n(i64::from(level.min(8))));
+        w.close("w:numPr");
+    } else if let Some(nr) = p.numbering {
         w.open("w:numPr", &[]);
         w.val("w:ilvl", &n(nr.level.min(8) as i64));
         w.val("w:numId", &n(nr.num as i64));
@@ -451,7 +509,7 @@ pub fn margins(w: &mut W, tag: &str, m: &[f32; 4]) {
     margin_sides(w, tag, &m.map(Some));
 }
 
-fn margin_sides(w: &mut W, tag: &str, m: &[Option<f32>; 4]) {
+pub(super) fn margin_sides(w: &mut W, tag: &str, m: &[Option<f32>; 4]) {
     w.open(tag, &[]);
     for (name, value) in ["w:top", "w:left", "w:bottom", "w:right"].iter().zip(m.iter()) {
         if let Some(v) = value {
@@ -537,6 +595,8 @@ fn tblpr_inner(w: &mut W, t: &TableProps) {
     }
     if let Some(m) = &t.cell_margins {
         margins(w, "w:tblCellMar", m);
+    } else if let Some(m) = &t.partial_cell_margins {
+        margin_sides(w, "w:tblCellMar", m);
     }
     let look = look_attrs(&t.look);
     let refs: Vec<(&str, &str)> = look.iter().map(|(k, v)| (*k, v.as_str())).collect();
@@ -592,6 +652,8 @@ fn tblprex(w: &mut W, t: &TableProps) {
     }
     if let Some(m) = &t.cell_margins {
         margins(w, "w:tblCellMar", m);
+    } else if let Some(m) = &t.partial_cell_margins {
+        margin_sides(w, "w:tblCellMar", m);
     }
     w.close("w:tblPrEx");
 }

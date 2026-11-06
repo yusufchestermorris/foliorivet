@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 use super::cells::{cell, selected_cells, with_cells, with_table};
 use super::{
     Align, Border, BorderStyle, Borders, CmdError, CmdResult, HeightRule, Path, Pos, Rgb, Selection, Session, Table, TextDirection, VAlign, Value,
@@ -240,8 +241,8 @@ pub(super) fn borders(s: &mut Session, v: &Value) -> CmdResult {
     let kind = p::str(v, "kind").unwrap_or("all");
     let w = p::f32(v, "width").unwrap_or(0.5).clamp(0.25, 6.0);
     let color = p::str(v, "color").and_then(Rgb::parse);
-    let b = Border { style: BorderStyle::Single, width: w, color, space: 0.0 };
-    let none = Border { style: BorderStyle::None, width: 0.0, color: None, space: 0.0 };
+    let b = Border { color_source: None, style: BorderStyle::Single, width: w, color, space: 0.0 };
+    let none = Border { color_source: None, style: BorderStyle::None, width: 0.0, color: None, space: 0.0 };
     with_table(s, |t| {
         let mut cur = t.props.borders.unwrap_or_default();
         match kind {

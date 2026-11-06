@@ -1,6 +1,8 @@
+# Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 [workspace]
 resolver = "3"
 members = ["crates/*", "apps/*", "xtask"]
+exclude = ["bindings/python"]
 default-members = ["crates/*", "apps/wordcraft", "apps/wordcraft-cli", "xtask"]
 
 [workspace.package]

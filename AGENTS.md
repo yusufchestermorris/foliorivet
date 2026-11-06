@@ -138,3 +138,20 @@ Progress docs: `ROADMAP.md` (stage, headline numbers, progress log), `docs/targe
 - Some workflow files here still run their own jobs. Don't add to them. Moving a job into craft-common-actions is its own task, never part of another PR, and the job stays here until a shared workflow runs it.
 
 New workspace crates include `workspace = true` under `[lints]` in `Cargo.toml`. Production crate roots declare the crate-level lint attributes before modules; crate-level `//!` documentation may precede them.
+
+## FolioRivet native templating fork
+
+FolioRivet reuses WordCraft's existing Rust engine and command registry through
+thin synchronous PyO3 bindings. Keep Python packaging isolated in bindings/python;
+core document operations must remain usable from Rust without Python. Do not add
+report-specific calculations or duplicate rendering logic in the bindings.
+
+Use CONTRIBUTING.md and docs/release/BUILD.md for public build/test instructions.
+Preserve Word-authored styles, geometry, sections, headers and footers. Reject
+unsupported/ambiguous targets and keep inspect, preflight and render resolution
+consistent. Preserve original templates; output paths must be new staging files.
+Do not bundle private reports, Word-produced review copies or proprietary assets.
+Retain upstream licenses, NOTICE, attribution and modification notices. ArtCraft
+marks are governed by docs/brand/LICENSE-brand.txt; use independent fork branding.
+The alpha does not assert production readiness. Clean-host, independent Word and
+onboarding studies remain adoption work, not extra alpha release gates.

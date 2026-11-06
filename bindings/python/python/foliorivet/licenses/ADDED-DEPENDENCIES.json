@@ -1,0 +1,134 @@
+[
+  {
+    "name": "indoc",
+    "version": "2.0.8",
+    "source": "registry+https://github.com/rust-lang/crates.io-index",
+    "license": "MIT OR Apache-2.0",
+    "licenses": [
+      {
+        "file": "indoc-2.0.8-LICENSE-APACHE",
+        "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+      },
+      {
+        "file": "indoc-2.0.8-LICENSE-MIT",
+        "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+      }
+    ],
+    "disposition": "permissive addition accepted for local spike; license texts inspected; no distribution clearance"
+  },
+  {
+    "name": "pyo3",
+    "version": "0.27.2",
+    "source": "registry+https://github.com/rust-lang/crates.io-index",
+    "license": "MIT OR Apache-2.0",
+    "licenses": [
+      {
+        "file": "pyo3-0.27.2-LICENSE-APACHE",
+        "sha256": "32c76dbe0e73d79100d5ece77c158399f2e2541bc5c78548a4ba45c1cb53c5c9"
+      },
+      {
+        "file": "pyo3-0.27.2-LICENSE-MIT",
+        "sha256": "afcbe3b2e6b37172b5a9ca869ee4c0b8cdc09316e5d4384864154482c33e5af6"
+      }
+    ],
+    "disposition": "permissive addition accepted for local spike; license texts inspected; no distribution clearance"
+  },
+  {
+    "name": "pyo3-build-config",
+    "version": "0.27.2",
+    "source": "registry+https://github.com/rust-lang/crates.io-index",
+    "license": "MIT OR Apache-2.0",
+    "licenses": [
+      {
+        "file": "pyo3-build-config-0.27.2-LICENSE-APACHE",
+        "sha256": "32c76dbe0e73d79100d5ece77c158399f2e2541bc5c78548a4ba45c1cb53c5c9"
+      },
+      {
+        "file": "pyo3-build-config-0.27.2-LICENSE-MIT",
+        "sha256": "afcbe3b2e6b37172b5a9ca869ee4c0b8cdc09316e5d4384864154482c33e5af6"
+      }
+    ],
+    "disposition": "permissive addition accepted for local spike; license texts inspected; no distribution clearance"
+  },
+  {
+    "name": "pyo3-ffi",
+    "version": "0.27.2",
+    "source": "registry+https://github.com/rust-lang/crates.io-index",
+    "license": "MIT OR Apache-2.0",
+    "licenses": [
+      {
+        "file": "pyo3-ffi-0.27.2-LICENSE-APACHE",
+        "sha256": "32c76dbe0e73d79100d5ece77c158399f2e2541bc5c78548a4ba45c1cb53c5c9"
+      },
+      {
+        "file": "pyo3-ffi-0.27.2-LICENSE-MIT",
+        "sha256": "afcbe3b2e6b37172b5a9ca869ee4c0b8cdc09316e5d4384864154482c33e5af6"
+      }
+    ],
+    "disposition": "permissive addition accepted for local spike; license texts inspected; no distribution clearance"
+  },
+  {
+    "name": "pyo3-macros",
+    "version": "0.27.2",
+    "source": "registry+https://github.com/rust-lang/crates.io-index",
+    "license": "MIT OR Apache-2.0",
+    "licenses": [
+      {
+        "file": "pyo3-macros-0.27.2-LICENSE-APACHE",
+        "sha256": "32c76dbe0e73d79100d5ece77c158399f2e2541bc5c78548a4ba45c1cb53c5c9"
+      },
+      {
+        "file": "pyo3-macros-0.27.2-LICENSE-MIT",
+        "sha256": "afcbe3b2e6b37172b5a9ca869ee4c0b8cdc09316e5d4384864154482c33e5af6"
+      }
+    ],
+    "disposition": "permissive addition accepted for local spike; license texts inspected; no distribution clearance"
+  },
+  {
+    "name": "pyo3-macros-backend",
+    "version": "0.27.2",
+    "source": "registry+https://github.com/rust-lang/crates.io-index",
+    "license": "MIT OR Apache-2.0",
+    "licenses": [
+      {
+        "file": "pyo3-macros-backend-0.27.2-LICENSE-APACHE",
+        "sha256": "32c76dbe0e73d79100d5ece77c158399f2e2541bc5c78548a4ba45c1cb53c5c9"
+      },
+      {
+        "file": "pyo3-macros-backend-0.27.2-LICENSE-MIT",
+        "sha256": "afcbe3b2e6b37172b5a9ca869ee4c0b8cdc09316e5d4384864154482c33e5af6"
+      }
+    ],
+    "disposition": "permissive addition accepted for local spike; license texts inspected; no distribution clearance"
+  },
+  {
+    "name": "target-lexicon",
+    "version": "0.13.5",
+    "source": "registry+https://github.com/rust-lang/crates.io-index",
+    "license": "Apache-2.0 WITH LLVM-exception",
+    "licenses": [
+      {
+        "file": "target-lexicon-0.13.5-LICENSE",
+        "sha256": "268872b9816f90fd8e85db5a28d33f8150ebb8dd016653fb39ef1f94f2686bc5"
+      }
+    ],
+    "disposition": "permissive addition accepted for local spike; license texts inspected; no distribution clearance"
+  },
+  {
+    "name": "unindent",
+    "version": "0.2.4",
+    "source": "registry+https://github.com/rust-lang/crates.io-index",
+    "license": "MIT OR Apache-2.0",
+    "licenses": [
+      {
+        "file": "unindent-0.2.4-LICENSE-APACHE",
+        "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+      },
+      {
+        "file": "unindent-0.2.4-LICENSE-MIT",
+        "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+      }
+    ],
+    "disposition": "permissive addition accepted for local spike; license texts inspected; no distribution clearance"
+  }
+]

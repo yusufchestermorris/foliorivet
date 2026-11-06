@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 use super::char_props::{NumChange, PropChange};
 use super::color::Rgb;
 use super::{Deserialize, Serialize};
@@ -206,6 +207,8 @@ impl BorderStyle {
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, Default)]
 #[serde(default)]
 pub struct Border {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub color_source: Option<super::OoxmlColor>,
     pub style: BorderStyle,
     /// Line width, points.
     pub width: f32,
@@ -215,8 +218,12 @@ pub struct Border {
 }
 
 impl Border {
+    pub fn set_color(&mut self, color: Option<Rgb>) {
+        self.color_source = None;
+        self.color = color;
+    }
     pub fn single(width: f32) -> Border {
-        Border { style: BorderStyle::Single, width, color: None, space: 0.0 }
+        Border { style: BorderStyle::Single, width, color: None, space: 0.0, color_source: None }
     }
     pub fn is_visible(&self) -> bool {
         self.style != BorderStyle::None && self.width > 0.0

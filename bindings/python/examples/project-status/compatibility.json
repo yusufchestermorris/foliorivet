@@ -1,0 +1,13 @@
+{
+  "date": "2026-11-05",
+  "installed_windows_linux_scripts": "PASS",
+  "word_open_save_reopen": "PASS automation",
+  "word_version": "16.0",
+  "word_build": "16.0.20527",
+  "structural_audit": "PASS",
+  "pixel_comparison": "identical across Windows/Linux",
+  "agent_visual_review": "PASS after title-border correction",
+  "independent_repair_prompt_review": "PENDING",
+  "generated_sha256": "86db0fe7b367fef9ce2f2e0c17ff9e66fd35e8c2bb5416779e43fee219aac031",
+  "scope": "Synthetic public example; historical observations only. Independent Word and clean-host adoption checks remain deferred, not alpha gates."
+}

@@ -1,3 +1,4 @@
+// Modified for FolioRivet: validate the renamed CLI usage text (2026-11-06).
 use super::*;
 use std::io::Read;
 
@@ -105,7 +106,7 @@ fn help_or_h_after_a_subcommand_asks_for_the_usage() {
 fn usage_lists_exactly_the_subcommands() {
     let listed: Vec<&str> = USAGE
         .lines()
-        .filter_map(|line| line.strip_prefix("  wordcraft-cli ")?.split_whitespace().next())
+        .filter_map(|line| line.strip_prefix("  foliorivet-cli ")?.split_whitespace().next())
         .filter(|word| !word.starts_with(['-', '[']))
         .collect();
     assert_eq!(listed, SUBCOMMANDS);

@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 use super::char_props::PropChange;
 use super::color::Rgb;
 use super::para_props::{Align, Borders};
@@ -136,6 +137,9 @@ pub struct TableProps {
     pub borders: Option<Borders>,
     /// Default cell margins (top, left, bottom, right), points.
     pub cell_margins: Option<[f32; 4]>,
+    /// Per-side defaults; omitted sides inherit the table style or enclosing table.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub partial_cell_margins: Option<[Option<f32>; 4]>,
     /// Fixed column widths (no auto-fit).
     pub fixed: bool,
     /// Table style options ("look"): header row, total row, banded rows, first column, last
@@ -164,6 +168,14 @@ pub struct TableProps {
     pub space_before: Option<f32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub space_after: Option<f32>,
+}
+
+impl TableProps {
+    /// Complete overrides take precedence; otherwise resolve only explicitly supplied sides.
+    pub fn resolved_cell_margins(&self, defaults: [f32; 4]) -> [f32; 4] {
+        self.cell_margins
+            .unwrap_or_else(|| self.partial_cell_margins.map_or(defaults, |sides| std::array::from_fn(|i| sides[i].unwrap_or(defaults[i]))))
+    }
 }
 
 /// Where a floating table sits; the text after it wraps around it.

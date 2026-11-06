@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Table Design › New / Modify Table Style (#714): one table style part at a time ("Apply
 //! formatting to"), with its font, size, bold, italic, underline and colour, cell shading, borders
 //! (line style, width and colour, and which edges) and cell alignment, over a live preview. OK
@@ -51,7 +52,7 @@ impl Default for BorderPen {
 
 impl BorderPen {
     fn line(&self) -> Border {
-        Border { style: self.style, width: self.width, color: Rgb::parse(&self.color), space: 0.0 }
+        Border { color_source: None, style: self.style, width: self.width, color: Rgb::parse(&self.color), space: 0.0 }
     }
 }
 
@@ -215,7 +216,7 @@ pub fn region_changes(r: &TableRegion, basis: &TableRegion) -> Value {
 /// Apply the border picker's `edges` choice to `b` with `pen`: All, None, Outside and Inside set
 /// their edges; a single edge toggles.
 pub fn pick_edges(b: &mut Borders, edges: &str, pen: &BorderPen) {
-    let none = Border { style: BorderStyle::None, width: 0.0, color: None, space: 0.0 };
+    let none = Border { color_source: None, style: BorderStyle::None, width: 0.0, color: None, space: 0.0 };
     let line = pen.line();
     let toggle = |e: &mut Option<Border>| *e = Some(if e.is_some_and(|x| x.is_visible()) { none } else { line });
     match edges {

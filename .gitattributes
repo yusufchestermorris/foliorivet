@@ -1,1 +1,6 @@
 craft-i18n.rev text eol=lf
+
+# Inventories hash the exact upstream notice bytes, independent of checkout OS.
+bindings/python/python/foliorivet/licenses/** -text
+packaging/cli-notices/** -text
+bindings/python/examples/LICENSE-python-docx -text

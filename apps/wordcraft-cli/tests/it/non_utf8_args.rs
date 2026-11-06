@@ -1,3 +1,4 @@
+// Modified for FolioRivet: validate the renamed CLI error identity (2026-11-06).
 //! A file name that isn't valid Unicode (`caf\xe9.txt`, Latin-1) never panics the CLI (#1440): the
 //! file a command opens opens, and any other such argument is an error naming it. Not on macOS:
 //! APFS refuses file names that aren't valid UTF-8, so the fixture can't be made there.
@@ -68,7 +69,7 @@ fn any_other_such_argument_is_an_error_naming_it() {
         let shown = args[n - 1].to_string_lossy();
         assert!(shown.contains('\u{FFFD}'));
         assert_eq!(out.status.code(), Some(1), "{args:?}: stderr: {stderr}");
-        assert_eq!(stderr, format!("wordcraft-cli: argument {n} is not valid Unicode: {shown}\n"), "{args:?}");
+        assert_eq!(stderr, format!("foliorivet-cli: argument {n} is not valid Unicode: {shown}\n"), "{args:?}");
     }
     assert!(!std::path::Path::new(&out_name).exists());
     let _ = std::fs::remove_dir_all(dir);

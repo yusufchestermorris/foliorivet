@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 use std::sync::Arc;
 
 use wordcraft_doc::para::InlineObject;
@@ -854,7 +855,8 @@ fn triple_borders_export_three_lines() {
     use wordcraft_doc::props::{Border, BorderStyle, Borders};
     let pdf = |style: BorderStyle| {
         let mut p = Paragraph::with_text("Ruled", CharProps::default());
-        p.props.borders = Some(Borders { bottom: Some(Border { style, width: 0.75, color: None, space: 1.0 }), ..Default::default() });
+        p.props.borders =
+            Some(Borders { bottom: Some(Border { color_source: None, style, width: 0.75, color: None, space: 1.0 }), ..Default::default() });
         let mut d = Document::new();
         d.body = vec![para_block(p)];
         export(&d, &PdfOptions { tagged: false, ..Default::default() }).unwrap()

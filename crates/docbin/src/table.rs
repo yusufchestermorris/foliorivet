@@ -1,3 +1,4 @@
+// Modified for FolioRivet: share finished blocks to preserve the temporary-record memory bound (2026-11-06).
 //! Tables: the table sprms (sgc 5) carried by a row-end (TTP) mark's grpprl, and the
 //! assembly of cell-ended paragraphs into [`Table`] blocks ([MS-DOC] §2.6.3, §2.4.3).
 
@@ -265,7 +266,9 @@ pub(crate) fn decode(papx: &[u8]) -> RowInfo {
 
 /// A finished paragraph plus the bookkeeping the block assembly needs.
 pub(crate) struct ParaOut {
-    pub(crate) para: Paragraph,
+    // Reuse the final model allocation: an inline Paragraph here keeps the whole
+    // large work-vector buffer alive while a second set of result blocks is built.
+    pub(crate) block: Arc<Block>,
     /// CP just past the terminating mark.
     pub(crate) end_cp: u32,
     /// Table context from the mark's PAPX; `None` for a paragraph outside a table.
@@ -387,7 +390,7 @@ pub(crate) fn assemble(paras: Vec<ParaOut>) -> Blocks {
                 open = false;
                 depth_seen = 0;
             }
-            out.push(para_block(p.para));
+            out.push(p.block);
             continue;
         };
         if !open {
@@ -418,11 +421,12 @@ pub(crate) fn assemble(paras: Vec<ParaOut>) -> Blocks {
             // column over. A TTP mark with content, or one short of the TDefTable's
             // columns, still ends a real cell (rows without a TDefTable keep today's
             // shape: the count is unknowable, so the mark always flushes).
-            let row_end_only = info.ttp && p.para.text.is_empty() && cell.is_empty() && !info.edges.is_empty() && cells.len() + 1 >= info.edges.len();
+            let has_content = p.block.as_para().is_none_or(|para| !para.text.is_empty());
+            let row_end_only = info.ttp && !has_content && cell.is_empty() && !info.edges.is_empty() && cells.len() + 1 >= info.edges.len();
             // ...but a row-end mark with no cells before it still makes a (one-cell) row.
             let row_end_only = row_end_only && !cells.is_empty();
-            if !p.para.text.is_empty() {
-                cell.push(para_block(p.para));
+            if has_content {
+                cell.push(p.block);
             }
             if !row_end_only {
                 flush_cell(&mut cells, &mut cell);
@@ -432,7 +436,7 @@ pub(crate) fn assemble(paras: Vec<ParaOut>) -> Blocks {
                 rows.push(row);
             }
         } else {
-            cell.push(para_block(p.para));
+            cell.push(p.block);
         }
     }
     if open {

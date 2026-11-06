@@ -1,3 +1,11 @@
+<!-- Modified for FolioRivet: public alpha scope; upstream roadmap retained (2026-11-06). -->
+> **FolioRivet:** 0.1.0a1 provides bounded native Python/CLI DOCX templating.
+> See [current scope](docs/release/STATUS.md), [contributor instructions](CONTRIBUTING.md)
+> and [compatibility limits](docs/release/COMPATIBILITY.md). Local qualification
+> history is archived outside the public source. Clean-host, independent Word,
+> onboarding and production integration remain adoption work. The upstream roadmap
+> below describes WordCraft and does not expand FolioRivet's alpha support promise.
+
 # WordCraft roadmap
 
 > **Highlight update:** 2026-10-25 · Highlight shortcut toggles the last chosen colour off when the whole selection has it; explicit colour commands remain setters (#4085). Readiness estimates unchanged.

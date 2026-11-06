@@ -1,0 +1,15 @@
+{
+  "model": "Synthetic classifier 01",
+  "classes": [
+    {
+      "name": "Class A",
+      "precision": "94.0%"
+    },
+    {
+      "name": "Class B",
+      "precision": "91.5%"
+    }
+  ],
+  "has_evaluation": true,
+  "evaluation": "Held-out accuracy: 92.8%. Illustrative data only."
+}

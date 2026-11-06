@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Content controls (`w:sdt`) keep their properties, levels and nesting through a round trip.
 //! All markup here is synthetic, written from ECMA-376 §17.5.2 and the [MS-DOCX] `w14`/`w15`
 //! extensions.
@@ -32,6 +33,41 @@ fn sdt(pr: &str, content: &str) -> String {
 }
 fn cell(text: &str) -> String {
     format!("<w:tc>{}</w:tc>", p(&t(text)))
+}
+
+/// Stage 4 prerequisite: a row target must identify its complete boundary,
+/// including when a superficially similar control actually spans two rows.
+#[test]
+fn template_row_target_boundaries_survive_import_and_repeated_save() {
+    for count in [1usize, 2] {
+        let rows = (0..count).map(|_| format!("<w:tr>{}</w:tr>", cell("prototype"))).collect::<String>();
+        let wrapped = sdt(r#"<w:id w:val="401"/><w:tag w:val="rows:class_distribution"/>"#, &rows);
+        let body = format!("<w:tbl><w:tblGrid><w:gridCol w:w=\"2400\"/></w:tblGrid><w:tr>{}</w:tr>{wrapped}</w:tbl>", cell("Header"));
+        let mut bytes = package(&body);
+        for _ in 0..3 {
+            let doc = read(&bytes).unwrap();
+            let table = doc
+                .body
+                .iter()
+                .find_map(|b| match b.as_ref() {
+                    Block::Table(t) => Some(t),
+                    _ => None,
+                })
+                .unwrap();
+            assert_eq!(table.rows.len(), count + 1);
+            assert!(table.rows[0].controls.is_empty());
+            assert_eq!(table.rows[1].controls.open.len(), 1);
+            assert_eq!(table.rows[1].controls.open[0].tag, "rows:class_distribution");
+            assert_eq!(table.rows[1].controls.close, u32::from(count == 1));
+            assert_eq!(table.rows[count].controls.close, 1);
+            if count == 2 {
+                assert!(table.rows[2].controls.open.is_empty());
+            }
+            // Scalar ControlRange is deliberately insufficient for row wrappers.
+            assert!(!doc.control_ranges(StoryRef::Body).iter().any(|r| r.control.tag == "rows:class_distribution"));
+            bytes = write(&doc).unwrap();
+        }
+    }
 }
 
 /// Every kind of control, at every level, with nesting.

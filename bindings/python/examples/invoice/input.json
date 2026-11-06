@@ -1,0 +1,27 @@
+{
+  "quote_id": "SYN-0042",
+  "customer": "Example Research Studio",
+  "lines": [
+    {
+      "description": "Template preparation",
+      "quantity": "2",
+      "unit_price": "GBP 75.00",
+      "amount": "GBP 150.00"
+    },
+    {
+      "description": "Compatibility review — café",
+      "quantity": "1",
+      "unit_price": "GBP 120.00",
+      "amount": "GBP 120.00"
+    },
+    {
+      "description": "Documentation\nEditable handoff",
+      "quantity": "1",
+      "unit_price": "GBP 30.00",
+      "amount": "GBP 30.00"
+    }
+  ],
+  "subtotal": "GBP 300.00",
+  "tax": "GBP 60.00",
+  "total": "GBP 360.00"
+}

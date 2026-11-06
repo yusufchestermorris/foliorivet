@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Character formatting (Home › Font).
 
 use serde_json::{Value, json};
@@ -355,11 +356,13 @@ fn font(s: &mut Session, v: &Value) -> CmdResult {
     });
     apply(s, &|c| {
         if let Some(n) = &name {
-            c.font = Some(n.clone());
+            c.set_font(Some(n.clone()));
+            c.font_cs_theme = None;
             c.font_cs = Some(n.clone());
         }
         if let Some(n) = &ea {
             c.font_ea = Some(n.clone());
+            c.font_ea_theme = None;
         }
     })
 }
@@ -440,7 +443,7 @@ fn resize(s: &mut Session, next: &dyn Fn(f32) -> f32) -> CmdResult {
 fn color(s: &mut Session, v: &Value) -> CmdResult {
     let c = p::req_str(v, "color")?;
     let tc = TextColor::parse(c).ok_or_else(|| CmdError::Params("color must be RRGGBB or auto".into()))?;
-    apply(s, &|x| x.color = Some(tc))
+    apply(s, &|x| x.set_color(Some(tc)))
 }
 
 /// `format.underlineColor`: the underline's own colour (`w:u w:color`), or `auto` to drop it so the

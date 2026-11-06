@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Print Markup: the comments in balloons in a markup area on the right of each page, joined to
 //! the text they comment on, the way Word prints and exports a document "showing markup".
 //!
@@ -143,7 +144,7 @@ pub(crate) fn add(ctx: &mut Ctx, lay: &mut DocLayout) {
             if k > 0 {
                 // A reply starts: a hairline between it and what it answers.
                 y += 3.0;
-                let border = Border { style: BorderStyle::Single, width: 0.25, color: Some(Rgb(0xC8, 0xC8, 0xC8)), space: 0.0 };
+                let border = Border { color_source: None, style: BorderStyle::Single, width: 0.25, color: Some(Rgb(0xC8, 0xC8, 0xC8)), space: 0.0 };
                 items.push(Placed::Rule { x0: x, y0: y, x1: x + inner, y1: y, border });
                 y += 3.0;
             }
@@ -210,7 +211,7 @@ pub(crate) fn add(ctx: &mut Ctx, lay: &mut DocLayout) {
             let avail = bottom - top;
             let (items, h) = if c.h > avail { (fit_box(c.items, avail - PAD), avail) } else { (c.items, c.h) };
             next = top + h + GAP;
-            let line = |style, width: f32| Border { style, width, color: Some(c.color), space: 0.0 };
+            let line = |style, width: f32| Border { color_source: None, style, width, color: Some(c.color), space: 0.0 };
             // Leader: along the text from the anchor to the page edge, then to the card.
             page.items.push(Placed::Rule { x0: c.ax, y0: c.ay, x1: pw, y1: c.ay, border: line(BorderStyle::Dashed, 0.5) });
             page.items.push(Placed::Rule { x0: pw, y0: c.ay, x1: x0, y1: top + 8.0, border: line(BorderStyle::Single, 0.5) });

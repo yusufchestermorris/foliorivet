@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Table Design › Table Styles: create, modify and delete table styles (whole table, header and
 //! total rows, first and last columns, banded rows and columns), stored as table styles in the
 //! document's style sheet (ECMA-376 §17.7.6).
@@ -330,7 +331,7 @@ fn edit(st: &mut Style, v: &Value) -> Result<(), CmdError> {
         let pp: ParaProps = serde_json::from_value(pp.clone()).map_err(|e| CmdError::Params(format!("para: {e}")))?;
         st.para.overlay(&pp);
         st.para.style = None;
-        st.para.numbering = None;
+        st.set_numbering(None);
     }
     Ok(())
 }
@@ -357,7 +358,7 @@ fn color_param(r: &Value, k: &str) -> Result<Option<Rgb>, CmdError> {
 }
 
 /// An explicit "no border" edge (`w:val="nil"`), which hides what a lower part draws.
-const NO_LINE: Border = Border { style: BorderStyle::None, width: 0.0, color: None, space: 0.0 };
+const NO_LINE: Border = Border { color_source: None, style: BorderStyle::None, width: 0.0, color: None, space: 0.0 };
 
 /// The border styles by param name.
 const LINE_STYLES: [(&str, BorderStyle); 9] = [
@@ -408,7 +409,8 @@ fn edges_param(e: &Value, b: &mut Borders) -> Result<(), CmdError> {
         Some(_) => return Err(CmdError::Params("border `style` is a name".into())),
     };
     let width = p::f32(e, "width").unwrap_or(0.5).clamp(0.25, 6.0);
-    let line = if style == BorderStyle::None { NO_LINE } else { Border { style, width, color: color_param(e, "color")?, space: 0.0 } };
+    let line =
+        if style == BorderStyle::None { NO_LINE } else { Border { color_source: None, style, width, color: color_param(e, "color")?, space: 0.0 } };
     let edges = match e.get("edges") {
         None => "all",
         Some(Value::String(n)) => n.as_str(),
@@ -461,7 +463,7 @@ fn region(r: &Value, f: &mut PartFormat) -> Result<(), CmdError> {
         f.fill = color_param(r, "fill")?;
     }
     if r.get("color").is_some() {
-        chr.color = color_param(r, "color")?.map(TextColor::Rgb);
+        chr.set_color(color_param(r, "color")?.map(TextColor::Rgb));
     }
     if let Some(b) = p::bool(r, "bold") {
         chr.bold = Some(b);
@@ -487,8 +489,8 @@ fn region(r: &Value, f: &mut PartFormat) -> Result<(), CmdError> {
     match r.get("font") {
         None => {}
         // Null or empty: the part's font is inherited again.
-        Some(Value::Null) => chr.font = None,
-        Some(Value::String(n)) => chr.font = Some(n.trim()).filter(|n| !n.is_empty()).map(|n| n.chars().take(256).collect()),
+        Some(Value::Null) => chr.set_font(None),
+        Some(Value::String(n)) => chr.set_font(Some(n.trim()).filter(|n| !n.is_empty()).map(|n| n.chars().take(256).collect())),
         Some(_) => return Err(CmdError::Params("`font` is a name or null".into())),
     }
     let name = |k: &str| -> Result<Option<Option<&str>>, CmdError> {
@@ -520,7 +522,13 @@ fn region(r: &Value, f: &mut PartFormat) -> Result<(), CmdError> {
     match r.get("borders") {
         Some(Value::Bool(true)) => {
             let width = p::f32(r, "borderWidth").unwrap_or(0.5).clamp(0.25, 6.0);
-            f.borders = Some(Borders::all(Border { style: BorderStyle::Single, width, color: color_param(r, "borderColor")?, space: 0.0 }));
+            f.borders = Some(Borders::all(Border {
+                color_source: None,
+                style: BorderStyle::Single,
+                width,
+                color: color_param(r, "borderColor")?,
+                space: 0.0,
+            }));
         }
         Some(Value::Bool(false)) => f.borders = Some(Borders::all(NO_LINE)),
         Some(Value::Null) => f.borders = None,

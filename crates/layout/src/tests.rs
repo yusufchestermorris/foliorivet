@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 use super::*;
 use wordcraft_doc::fill::Fill;
 use wordcraft_doc::para::InlineObject;
@@ -2662,7 +2663,7 @@ fn table_own_border_overrides_only_that_side() {
 fn table_nil_border_hides_style_side() {
     let mut d = Document::from_text("before\nafter");
     let mut t = Table::new(1, 1, 468.0); // 1×1: no inside edges
-    t.props.borders = Some(Borders::all(Border { style: BorderStyle::None, width: 0.0, color: None, space: 0.0 }));
+    t.props.borders = Some(Borders::all(Border { color_source: None, style: BorderStyle::None, width: 0.0, color: None, space: 0.0 }));
     d.insert_block(StoryRef::Body, &Path::top(1), wordcraft_doc::Block::Table(t)).unwrap();
     assert!(rules_on_page0(&lay(&d)).is_empty());
 }
@@ -5519,7 +5520,13 @@ fn padding_without_a_border_takes_room_in_odt_documents() {
             }
         }
         if let Some(wordcraft_doc::Block::Para(p)) = d.body.get_mut(1).map(std::sync::Arc::make_mut) {
-            let pad = wordcraft_doc::props::Border { style: wordcraft_doc::props::BorderStyle::None, width: 0.0, color: None, space: 20.0 };
+            let pad = wordcraft_doc::props::Border {
+                color_source: None,
+                style: wordcraft_doc::props::BorderStyle::None,
+                width: 0.0,
+                color: None,
+                space: 20.0,
+            };
             p.props.borders = Some(wordcraft_doc::props::Borders::box_(pad));
         }
         let l = lay(&d);
@@ -5616,7 +5623,7 @@ fn line_tops(l: &DocLayout) -> Vec<f32> {
 fn at_least_rows_add_cell_margins_and_border_bands() {
     use wordcraft_doc::props::{Border, BorderStyle, Borders, HeightRule};
     let mut d = Document::from_text("");
-    let line = Some(Border { style: BorderStyle::Single, width: 0.5, color: None, space: 0.0 });
+    let line = Some(Border { color_source: None, style: BorderStyle::Single, width: 0.5, color: None, space: 0.0 });
     let mut t = Table::new(2, 1, 200.0);
     t.props.borders = Some(Borders { top: line, left: line, bottom: line, right: line, between: line, inside_v: line });
     t.props.cell_margins = Some([5.0, 5.4, 5.0, 5.4]);
@@ -5742,6 +5749,41 @@ fn cell_margins_are_where_cell_text_starts() {
         });
         let (boxed, text_x) = (boxed.unwrap(), text_x.unwrap());
         assert!((text_x - boxed.x - cell_margins(&d, &t, 0, c)[1]).abs() < 0.01, "cell {c}: text at {text_x}, cell at {}", boxed.x);
+    }
+}
+
+#[test]
+fn fidelity_row_margin_exceptions_inherit_and_drive_layout() {
+    use wordcraft_doc::props::TableProps;
+    let mut d = Document::from_text("");
+    let mut t = Table::new(1, 2, 300.0);
+    t.props.cell_margins = Some([2.0, 9.0, 4.0, 3.0]);
+    t.rows[0].props.exceptions = Some(Box::new(TableProps { partial_cell_margins: Some([Some(0.0), None, Some(6.0), None]), ..Default::default() }));
+    t.rows[0].cells[1].props.partial_margins = Some([None, Some(20.0), None, None]);
+    for c in &mut t.rows[0].cells {
+        c.blocks = vec![wordcraft_doc::para_block(wordcraft_doc::Paragraph::with_text("Padding", Default::default()))];
+    }
+    assert_eq!(cell_margins(&d, &t, 0, 0), [0.0, 9.0, 6.0, 3.0]);
+    assert_eq!(cell_margins(&d, &t, 0, 1), [0.0, 20.0, 6.0, 3.0]);
+    d.body = vec![std::sync::Arc::new(wordcraft_doc::Block::Table(t))];
+    let l = lay(&d);
+    let items = &l.pages[0].items;
+    for (c, expected) in [(0, 9.0), (1, 20.0)] {
+        let rect = items
+            .iter()
+            .find_map(|it| match it {
+                Placed::Cell { rect, cell, .. } if *cell == c => Some(*rect),
+                _ => None,
+            })
+            .unwrap();
+        let x = items
+            .iter()
+            .find_map(|it| match it {
+                Placed::Lines { path, x, .. } if path.0.get(2) == Some(&(c as u32)) => Some(*x),
+                _ => None,
+            })
+            .unwrap();
+        assert!((x - rect.x - expected).abs() < 0.01);
     }
 }
 
@@ -6891,7 +6933,7 @@ fn compatibility_mode_decides_where_a_table_s_edge_sits() {
     let cell_text_x = |mode: u32| {
         let mut d = Document::from_text("");
         d.settings.compat_mode = mode;
-        let line = Some(Border { style: BorderStyle::Single, width: 0.5, color: None, space: 0.0 });
+        let line = Some(Border { color_source: None, style: BorderStyle::Single, width: 0.5, color: None, space: 0.0 });
         let mut t = Table::new(1, 1, 200.0);
         t.props.borders = Some(Borders { top: line, left: line, bottom: line, right: line, between: line, inside_v: line });
         t.rows[0].cells[0].blocks = vec![wordcraft_doc::para_block(wordcraft_doc::Paragraph::with_text("cell", Default::default()))];
@@ -9926,6 +9968,38 @@ fn list_indents_and_style_indents_combine_like_word() {
 /// Keep lines together it moves whole); a chain of kept paragraphs moves together. NIH's
 /// five-line kept paragraph left a third of a page empty.
 #[test]
+fn kept_heading_follows_table_headers_and_first_body_row() {
+    for cant_split in [false, true] {
+        for fillers in 35..55 {
+            let mut d = pagination_fixture_document(&vec!["filler"; fillers].join("\n"));
+            let heading = d.body.len();
+            let mut p = wordcraft_doc::Paragraph::with_text("Family heading", Default::default());
+            p.props.keep_next = Some(true);
+            p.props.keep_lines = Some(true);
+            d.body.push(wordcraft_doc::para_block(p));
+            let mut table = Table::new(3, 1, 468.0);
+            table.rows[0].props.header = true;
+            table.rows[0].cells[0] = wordcraft_doc::Cell::with_text("Header\nSecond header line\nThird header line");
+            table.rows[1].props.cant_split = cant_split;
+            table.rows[1].cells[0] = wordcraft_doc::Cell::with_text("First body line\nSecond body line\nThird body line");
+            d.body.push(Arc::new(Block::Table(table)));
+            let l = lay(&d);
+            let heading_page = l.caret(&Pos::body(heading, 0)).unwrap().page;
+            let first_table_page = l
+                .pages
+                .iter()
+                .position(|page| {
+                    page.items
+                        .iter()
+                        .any(|item| matches!(item, Placed::Cell { table, row: 1, .. } if table.0.first() == Some(&((heading + 1) as u32))))
+                })
+                .unwrap();
+            assert_eq!(heading_page, first_table_page, "fillers={fillers}, cant_split={cant_split}");
+        }
+    }
+}
+
+#[test]
 fn keep_with_next_moves_a_paragraph_only_when_it_would_fit() {
     // Page of each of the kept paragraph's 5 lines and of the first paragraph after it.
     let pages = |fillers: usize, kept: ParaProps, next: ParaProps| {
@@ -11659,8 +11733,8 @@ fn triple_table_borders_draw_triple_lines() {
     let mut d = Document::from_text("before\nafter");
     let mut t = Table::new(1, 1, 200.0);
     t.props.style = None;
-    let triple = Border { style: BorderStyle::Triple, width: 0.5, color: None, space: 0.0 };
-    let double = Border { style: BorderStyle::Double, width: 0.5, color: None, space: 0.0 };
+    let triple = Border { color_source: None, style: BorderStyle::Triple, width: 0.5, color: None, space: 0.0 };
+    let double = Border { color_source: None, style: BorderStyle::Double, width: 0.5, color: None, space: 0.0 };
     t.props.borders =
         Some(Borders { top: Some(triple), bottom: Some(double), left: Some(triple), right: Some(Border::single(0.5)), ..Default::default() });
     d.insert_block(StoryRef::Body, &Path::top(1), wordcraft_doc::Block::Table(t)).unwrap();
@@ -11676,7 +11750,7 @@ fn row_nil_overrides_style() {
     let mut d = Document::from_text("before\nafter");
     let mut t = Table::new(1, 1, 200.0);
     t.rows[0].props.exceptions = Some(Box::new(wordcraft_doc::props::TableProps {
-        borders: Some(Borders::all(Border { style: BorderStyle::None, width: 0.0, color: None, space: 0.0 })),
+        borders: Some(Borders::all(Border { color_source: None, style: BorderStyle::None, width: 0.0, color: None, space: 0.0 })),
         ..Default::default()
     }));
     t.rows[0].cells[0].props.borders = Some(Borders { right: Some(Border::single(2.0)), ..Default::default() });
@@ -12675,7 +12749,7 @@ enum KeepAfter {
 
 fn band_row_table(top: Option<Border>) -> Table {
     use wordcraft_doc::props::{HeightRule, LineSpacing};
-    let line = Border { style: BorderStyle::Single, width: SHARED_BAND, color: None, space: 0.0 };
+    let line = Border { color_source: None, style: BorderStyle::Single, width: SHARED_BAND, color: None, space: 0.0 };
     let mut table = Table::new(4, 1, 200.0);
     table.props.style = None;
     table.props.borders = Some(Borders::default());
@@ -12695,8 +12769,8 @@ fn band_row_table(top: Option<Border>) -> Table {
 
 #[test]
 fn shared_band_row_minimum() {
-    let hidden = Border { style: BorderStyle::None, width: 0.0, color: None, space: 0.0 };
-    let shown = Border { style: BorderStyle::Single, width: SHARED_BAND, color: None, space: 0.0 };
+    let hidden = Border { color_source: None, style: BorderStyle::None, width: 0.0, color: None, space: 0.0 };
+    let shown = Border { color_source: None, style: BorderStyle::Single, width: SHARED_BAND, color: None, space: 0.0 };
     // The previous row already paints the shared edge. Its band still clears the next cell.
     for top in [None, Some(hidden), Some(shown)] {
         let mut doc = Document::new();
@@ -12874,7 +12948,7 @@ fn bottom_border_reserves_gap() {
         for style in [BorderStyle::None, BorderStyle::Single] {
             let mut d = Document::from_text("First\nNext");
             d.para_mut(StoryRef::Body, &Path::top(0)).unwrap().props.borders =
-                Some(Borders { bottom: Some(Border { style, width: 0.5, space: 2.0, color: None }), ..Default::default() });
+                Some(Borders { bottom: Some(Border { style, width: 0.5, space: 2.0, color: None, color_source: None }), ..Default::default() });
             if let Some(kind) = part {
                 let id = d.add_part(kind, d.body.clone());
                 d.body = vec![wordcraft_doc::para_block(wordcraft_doc::Paragraph::with_text("Body", Default::default()))];
@@ -12920,7 +12994,10 @@ fn bottom_border_keeps_chain() {
                 p.props.line_spacing = Some(LineSpacing::Exactly(LINE_HEIGHT));
                 p.props.keep_next = Some(block == 1 || block == 2);
                 if block == bordered {
-                    p.props.borders = Some(Borders { bottom: Some(Border { style, width: 0.5, space: 2.0, color: None }), ..Default::default() });
+                    p.props.borders = Some(Borders {
+                        bottom: Some(Border { style, width: 0.5, space: 2.0, color: None, color_source: None }),
+                        ..Default::default()
+                    });
                 }
             }
             let laid = lay(&d);
@@ -12951,8 +13028,10 @@ fn border_break_keeps_preflight() {
         p.props.line_spacing = Some(LineSpacing::Exactly(LINE_HEIGHT));
         p.props.keep_lines = Some(true);
         p.props.keep_next = Some(false);
-        p.props.borders =
-            Some(Borders { bottom: Some(Border { style: BorderStyle::Single, width: 1.0, space: BORDER_GAP, color: None }), ..Default::default() });
+        p.props.borders = Some(Borders {
+            bottom: Some(Border { style: BorderStyle::Single, width: 1.0, space: BORDER_GAP, color: None, color_source: None }),
+            ..Default::default()
+        });
         p
     };
     let fitting = format!("One{PAGE_BREAK}");

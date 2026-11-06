@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 use super::*;
 
 #[test]
@@ -713,7 +714,10 @@ fn cells_take_their_css_borders() {
     assert_eq!(t.rows[0][0].valign, Some(wordcraft_doc::props::VAlign::Bottom));
     let b = t.rows[0][0].borders.expect("borders");
     assert_eq!(b.top, Some(Border::single(0.75)));
-    assert_eq!(b.bottom, Some(Border { style: BorderStyle::Double, width: 2.0, color: Some(wordcraft_doc::Rgb(255, 0, 0)), space: 0.0 }));
+    assert_eq!(
+        b.bottom,
+        Some(Border { color_source: None, style: BorderStyle::Double, width: 2.0, color: Some(wordcraft_doc::Rgb(255, 0, 0)), space: 0.0 })
+    );
     assert_eq!(b.left.map(|l| l.style), Some(BorderStyle::None));
     // A border of no width is none (OOXML has no zero-width line).
     assert_eq!(b.right.map(|r| r.style), Some(BorderStyle::None));

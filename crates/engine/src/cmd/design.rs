@@ -1,3 +1,4 @@
+// Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 //! Design tab: themes, style sets, colours, fonts, paragraph spacing, watermark, page colour, borders.
 
 use serde_json::{Value, json};
@@ -96,14 +97,14 @@ pub fn specs() -> Vec<CommandSpec> {
 fn set_fonts(s: &mut Session, heading: &str, body: &str) {
     s.doc.settings.major_font = heading.into();
     s.doc.settings.minor_font = body.into();
-    Arc::make_mut(&mut s.doc.styles).default_chr.font = Some(body.into());
+    Arc::make_mut(&mut s.doc.styles).default_chr.set_font(Some(body.into()));
     for st in &mut Arc::make_mut(&mut s.doc.styles).styles {
         if let Some(f) = &st.chr.font
             && (f == styles::HEADING_FONT || st.id.starts_with("Heading") || st.id == "Title")
         {
-            st.chr.font = Some(heading.into());
+            st.chr.set_font(Some(heading.into()));
         } else if st.chr.font.is_some() && st.chr.font.as_deref() != Some(heading) {
-            st.chr.font = Some(body.into());
+            st.chr.set_font(Some(body.into()));
         }
     }
 }
@@ -115,10 +116,10 @@ fn set_accent(s: &mut Session, accent: Rgb) {
             || st.id == "IntenseEmphasis"
             || st.id == "IntenseReference"
         {
-            st.chr.color = Some(TextColor::Rgb(accent));
+            st.chr.set_color(Some(TextColor::Rgb(accent)));
             if let Some(b) = st.para.borders.as_mut() {
                 for e in [&mut b.top, &mut b.bottom].into_iter().flatten() {
-                    e.color = Some(accent);
+                    e.set_color(Some(accent));
                 }
             }
         }
@@ -148,25 +149,25 @@ fn style_set(s: &mut Session, v: &Value) -> CmdResult {
     let name = p::req_str(v, "name")?;
     let accent = s.doc.settings.theme_colors.get(4).copied().unwrap_or(styles::HEADING_BLUE);
     let mut fresh = wordcraft_doc::StyleSheet::builtin();
-    let line = Border { style: BorderStyle::Single, width: 0.75, color: Some(accent), space: 1.0 };
+    let line = Border { color_source: None, style: BorderStyle::Single, width: 0.75, color: Some(accent), space: 1.0 };
     for st in &mut fresh.styles {
         let heading = st.id.starts_with("Heading") || st.id == "Title";
         match name {
             "basic" if heading => {
-                st.chr.color = Some(TextColor::Rgb(Rgb(0x26, 0x26, 0x26)));
+                st.chr.set_color(Some(TextColor::Rgb(Rgb(0x26, 0x26, 0x26))));
                 st.chr.bold = Some(true);
             }
             "lines" if st.id == "Heading1" || st.id == "Title" => st.para.borders = Some(Borders { bottom: Some(line), ..Default::default() }),
             "shaded" if st.id == "Heading1" => {
                 st.para.shading = Some(accent);
-                st.chr.color = Some(TextColor::Rgb(Rgb::WHITE));
+                st.chr.set_color(Some(TextColor::Rgb(Rgb::WHITE)));
             }
             "casual" if heading => st.chr.italic = Some(true),
             "centered" if heading => st.para.align = Some(wordcraft_doc::Align::Center),
             "minimalist" if heading => {
                 st.chr.caps = Some(true);
                 st.chr.spacing = Some(1.0);
-                st.chr.color = Some(TextColor::Rgb(Rgb(0x40, 0x40, 0x40)));
+                st.chr.set_color(Some(TextColor::Rgb(Rgb(0x40, 0x40, 0x40))));
             }
             "title" if st.id == "Title" => st.chr.size = Some(36.0),
             _ => {}
@@ -275,7 +276,7 @@ fn page_borders(s: &mut Session, v: &Value) -> CmdResult {
             let width = p::f32(v, "width").unwrap_or(1.0).clamp(0.25, 6.0);
             let color = p::str(v, "color").and_then(Rgb::parse);
             let style = p::str(v, "style").map(BorderStyle::from_ooxml).unwrap_or(BorderStyle::Single);
-            (kind != "none").then(|| Borders::box_(Border { style, width, color, space: 24.0 }))
+            (kind != "none").then(|| Borders::box_(Border { color_source: None, style, width, color, space: 24.0 }))
         }
     };
     let blocks: Vec<usize> = match p::str(v, "applyTo") {

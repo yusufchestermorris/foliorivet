@@ -1,3 +1,4 @@
+# Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06).
 [package]
 name = "wordcraft-cli"
 version.workspace = true
@@ -21,3 +22,8 @@ wordcraft-mcp = { workspace = true }
 wordcraft-zotero = { workspace = true }
 serde_json = { workspace = true }
 sys-locale = "0.3"
+
+# FolioRivet distribution entry point; original binary retained for upstream tooling.
+[[bin]]
+name = "foliorivet-cli"
+path = "src/main.rs"
