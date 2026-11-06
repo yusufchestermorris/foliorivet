@@ -1,7 +1,7 @@
 <!-- Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06). -->
 # FolioRivet
 
-**0.1.0a1 experimental preview — in preparation, not yet published.**
+**0.1.0a1 experimental alpha — available on PyPI.**
 APIs and output behavior may change. Qualification covers documented fixtures only;
 new templates need independent review. Production migration is not approved.
 See [the manual release checklist](docs/release/PREVIEW.md).
@@ -19,7 +19,7 @@ Business users and designers format templates directly in Microsoft Word, while 
 ## Release Status
 
 > [!IMPORTANT]
-> **FolioRivet 0.1.0 is an experimental public preview.**
+> **FolioRivet 0.1.0a1 is an experimental public preview.**
 > Supported template operations and platform matrices are deliberately bounded. Candidate wheels are prepared in `dist/` for qualification; public PyPI publication is pending final release clearance.
 
 ---
@@ -41,7 +41,7 @@ Business users and designers format templates directly in Microsoft Word, while 
 
 ## Installation
 
-FolioRivet 0.1.0 provides precompiled native wheels for **CPython 3.12 x64** on Windows and Ubuntu 22.04 LTS.
+FolioRivet 0.1.0a1 provides precompiled native wheels for **CPython 3.12 x64** on Windows and Ubuntu 22.04 LTS.
 
 Install from a qualified local wheel package:
 
@@ -49,14 +49,14 @@ Install from a qualified local wheel package:
 
     ```powershell
     # Inside your CPython 3.12 virtual environment:
-    python -m pip install --no-index dist/release-windows/foliorivet-0.1.0-cp312-cp312-win_amd64.whl
+    python -m pip install --no-index dist/release-windows/foliorivet-0.1.0a1-cp312-cp312-win_amd64.whl
     ```
 
 === "Ubuntu / Linux (bash)"
 
     ```bash
     # Requires glibc >= 2.35 (e.g. Ubuntu 22.04 LTS):
-    python3 -m pip install --no-index dist/release-linux/foliorivet-0.1.0-cp312-cp312-manylinux_2_35_x86_64.whl
+    python3 -m pip install --no-index dist/release-linux/foliorivet-0.1.0a1-cp312-cp312-manylinux_2_35_x86_64.whl
     ```
 
 Verify the installation:
@@ -240,9 +240,9 @@ Then open `http://127.0.0.1:8000/` in your browser.
 
 ## Supported Platforms
 
-| Component | Intended 0.1.0 Scope | Notes |
+| Component | Intended 0.1.0a1 Scope | Notes |
 |:---|:---|:---|
-| **Python Runtime** | CPython 3.12 x64 | 64-bit only; Python 3.11 and 3.13 not supported in 0.1.0 |
+| **Python Runtime** | CPython 3.12 x64 | 64-bit only; Python 3.11 and 3.13 not supported in 0.1.0a1 |
 | **Operating System** | Windows x64 | Windows 10/11, Server 2019+ (MSVC runtime) |
 | **Operating System** | Ubuntu 22.04 LTS x64 | Requires `glibc >= 2.35` (`manylinux_2_35_x86_64`) |
 | **Interfaces** | Python bindings & CLI | Synchronous native extension & `foliorivet-cli` |
@@ -256,11 +256,11 @@ Then open `http://127.0.0.1:8000/` in your browser.
 
 ## Limitations
 
-FolioRivet 0.1.0 enforces bounded structural guardrails to guarantee deterministic document generation:
+FolioRivet 0.1.0a1 enforces bounded structural guardrails to guarantee deterministic document generation:
 
 - **No Nested Variable Blocks**: A `repeat:` block cannot contain an inner `repeat:` or `if:` block.
 - **No Vertical Merges in Repeated Tables**: Vertical cell merges (`w:vMerge`) anywhere in a table targeted by `rows:` are unsupported.
-- **Uncropped Inline Images Only**: Picture replacement slots must use inline text wrapping and be uncropped. Floating images, SVG, and OLE objects are not supported in 0.1.0 replacement slots.
+- **Uncropped Inline Images Only**: Picture replacement slots must use inline text wrapping and be uncropped. Floating images, SVG, and OLE objects are not supported in 0.1.0a1 replacement slots.
 - **Overwrite Protection**: `render_template` refuses to overwrite existing files. Output must target a new path in an existing directory.
 - **Resource Bounds**: 1 MiB context JSON, 64 KiB per scalar, 1,000 table rows, 1,000 repeated items, and 16 MiB expansion budgets.
 - **Declarative Only**: FolioRivet does not evaluate mathematical expressions or format dates/currencies. Perform all data transformations in Python.
@@ -290,5 +290,6 @@ ArtCraft logo marks and product branding are subject to separate terms and are e
 
 ## Contributing and Support
 
+- **Contributing**: See [CONTRIBUTING.md](CONTRIBUTING.md).
 - **Issue Reporting**: See [Reporting a Preview Issue](docs/release/CONTRIBUTING.md) and [Support Policy](docs/reference/support.md).
 - **Security Inquiries**: See [`SECURITY.md`](SECURITY.md).

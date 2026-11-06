@@ -5,6 +5,13 @@ site_author: FolioRivet Contributors
 docs_dir: docs
 site_dir: site
 
+# Local records must never enter the public site.
+exclude_docs: |
+  wordcraft/
+  release/0.1.0-preparation.md
+  release/PREVIEW-VALIDATION.md
+  release/brand-removal.json
+
 theme:
   name: material
   palette:

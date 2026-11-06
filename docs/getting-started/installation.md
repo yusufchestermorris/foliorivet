@@ -18,7 +18,7 @@ Before installing FolioRivet, ensure your host environment meets the qualified r
 
 > [!IMPORTANT]
 > **Public Preview Notice**
-> FolioRivet 0.1.0a1 is currently in release preparation and not yet published to the public PyPI registry. Do not attempt `pip install foliorivet` without pointing to a qualified local wheel package.
+> FolioRivet 0.1.0a1 is an experimental alpha on PyPI. APIs and behavior may change; production adoption remains unqualified.
 
 ---
 
@@ -54,30 +54,15 @@ Always install FolioRivet in an isolated Python 3.12 virtual environment to prev
 
 ---
 
-## Step 2: Install the Qualified Local Wheel
+## Step 2: Install from PyPI
 
-Locate the precompiled wheel matching your operating system in your candidate distribution folder (e.g. `dist/preview-0.1.0a1-windows/` or `dist/preview-0.1.0a1-linux/`).
+```bash
+python -m pip install --only-binary=:all: foliorivet==0.1.0a1
+```
 
-=== "Windows (PowerShell)"
-
-    ```powershell
-    python -m pip install --upgrade pip
-    python -m pip install --no-index dist/preview-0.1.0a1-windows/foliorivet-0.1.0a1-cp312-cp312-win_amd64.whl
-    ```
-
-=== "Ubuntu / Linux (bash)"
-
-    ```bash
-    python -m pip install --upgrade pip
-    python -m pip install --no-index dist/preview-0.1.0a1-linux/foliorivet-0.1.0a1-cp312-cp312-manylinux_2_35_x86_64.whl
-    ```
-
-> [!NOTE]
-> When public PyPI distribution is officially enabled, installation will simply be:
-> ```bash
-> pip install foliorivet
-> ```
-> For 0.1.0a1 preview qualification, always install from verified release artifacts.
+For a locally built candidate, install its matching wheel with
+`python -m pip install --no-index PATH_TO_WHEEL`. Source-build instructions are
+in the repository's docs/release/BUILD.md. No sdist is qualified.
 
 ---
 

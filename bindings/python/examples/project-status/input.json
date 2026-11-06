@@ -1,0 +1,14 @@
+{
+  "project_name": "Example migration project",
+  "workstreams": [
+    {
+      "name": "Template verification",
+      "progress": "Complete for the tested scope"
+    },
+    {
+      "name": "Native packaging",
+      "progress": "Windows and Linux checks in progress"
+    }
+  ],
+  "has_review": true
+}

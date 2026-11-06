@@ -1,87 +1,36 @@
-# Manual experimental preview: 0.1.0a1
+# Manual experimental release workflow
 
-Publication HOLD. Nothing has been committed, tagged, pushed or uploaded.
+The first alpha is on PyPI. Use a new version for subsequent releases; never
+replace previously uploaded wheel contents or move an existing public tag.
 
-## Prepared source
+1. Review the source, tests, public examples, licenses and notices. Ignore local
+   plans, evidence, build outputs and machine-specific convenience scripts.
+2. Build and run the checks in BUILD.md on the supported platforms. Record failures
+   and qualification limits. Clean-host, independent Word, measured onboarding and
+   production integration are future adoption work, not alpha release gates.
+3. Review and commit changes on a branch, open a PR into this fork's main branch,
+   review and merge before releasing. Preserve upstream history and notices.
+4. Build matching candidates from the reviewed source. Assemble using:
 
-Python metadata: 0.1.0a1; isolated Rust binding: 0.1.0-alpha.1;
-CLI display: 0.1.0a1. Upstream engine version remains unchanged.
-The inherited WordCraft release workflow is retained as release.yml.disabled.
-Review all other workflows before enabling Actions on a new repository.
-No Python API change. CPython 3.12 Windows x64 and Linux x64 glibc 2.35+
-(initially Ubuntu 22.04) only. No sdist, desktop, ARM or macOS release.
+   ```text
+   python tools/release/prepare_preview.py --windows WINDOWS_CANDIDATE --linux LINUX_CANDIDATE --output NEW_UPLOAD_DIRECTORY
+   python -m twine check --strict NEW_UPLOAD_DIRECTORY/pypi/*.whl
+   ```
 
-## Owner decisions and release gates
-
-- GitHub fork: https://github.com/yusufchestermorris/foliorivet. Project URLs are
-  set in Python metadata; existing wheels require rebuilding to include them.
-- Review source AND history for private reports, evidence, secrets and personal data.
-  Ignoring files does not erase history. Do not publish the workspace or handoff ZIPs.
-- Complete legal/redistribution and binary-resource review, including all example
-  DOCX/PNG files. Collected notices do not constitute clearance.
-- Verify clean-host installation, Windows generation without Office, independent
-  Word repair-prompt review, and user-followed quick start on final candidates.
-- Record remaining full-workspace failures as limitations, never as passing checks.
-- Production-source access and shadow integration are deferred to adoption.
-- Human review, commit and publication approval remain required by workspace rules.
-
-## Build and test
-
-Run from the repository with the prepared toolchains. Output directories must be new:
-
-```powershell
-./tools/release/build-local-windows.ps1 -Release
-```
-
-```sh
-bash tools/release/build-local-linux.sh --release
-```
-
-These use dist/preview-0.1.0a1-windows and dist/preview-0.1.0a1-linux.
-Use fresh CPython 3.12 environments to install each matching wheel with
-`python -m pip install --no-index <wheel>`; run installed_smoke.py,
-stage4_smoke.py and stage5_smoke.py with REPO NEW_RESULTS MATCHING_CLI arguments.
-Then run:
-
-```text
-python -I tools/release/smoke_installed.py --examples bindings/python/examples --cli <matching-cli> --output <new-results>
-python tools/release/prepare_preview.py --windows dist/preview-0.1.0a1-windows --linux dist/preview-0.1.0a1-linux --output dist/preview-upload
-python -m twine check --strict dist/preview-upload/pypi/*.whl
-```
-
-The assembler rejects missing candidates, development profiles, changed hashes,
-missing notice inventory entries and mismatched wheel notice contents. It writes
-CLI bundles, a wheel-only pypi directory and SHA256SUMS.txt. It grants no clearance.
-The legacy package_local_cli.py is historical tooling; do not use it for this preview.
-
-## Manual publication after gates pass
-
-1. Use the GitHub fork yusufchestermorris/foliorivet of storytold/wordcraft, with
-   Actions disabled. Review and commit the intended source, then push only the
-   approved branch. Audit its complete history before publishing local changes.
-2. Freeze the release commit and rebuild/test from exactly that source. The current
-   uncommitted candidates cannot establish final tagged-source provenance.
-3. Create separate PyPI/TestPyPI accounts, verify email and configure account security.
-   Verify project ownership/name availability; earlier availability checks reserve nothing.
-4. Upload only the two wheels to TestPyPI:
-   `python -m twine upload --repository testpypi dist/preview-upload/pypi/*.whl`.
-   Enter username __token__ and the TestPyPI token at the prompt, never in source.
-5. On both targets, install with
-   `python -m pip install --index-url https://test.pypi.org/simple/ --only-binary=:all: --no-deps foliorivet==0.1.0a1`
-   and rerun the examples. Current metadata declares no Python runtime dependencies.
-6. After final approval, publish the reviewed branch to the GitHub fork, tag the frozen
-   commit v0.1.0a1, and push that tag explicitly. Create a draft prerelease with
-   both wheels, CLI bundles, checksums and PREVIEW-NOTES.md text.
-7. Upload the identical tested wheels using the separate PyPI token:
-   `python -m twine upload dist/preview-upload/pypi/*.whl`.
-8. Verify fresh installation on both targets:
-   `python -m pip install --index-url https://pypi.org/simple/ --only-binary=:all: foliorivet==0.1.0a1`.
-9. Publish the GitHub draft marked prerelease. Add actual repository and PyPI links.
-10. Replace bootstrap tokens with project-scoped tokens. Publish fixes as 0.1.0a2;
-    yank materially broken PyPI releases and annotate GitHub notes.
+   The assembler uses committed notice inputs and checks release profiles, wheel
+   tags and candidate hashes. It emits two wheels, CLI bundles and SHA256SUMS.txt.
+5. Upload the selected wheels to TestPyPI with Twine. Enter its token at the hidden
+   prompt. In a fresh environment, install with the TestPyPI index, an exact version,
+   `--only-binary=:all: --no-deps --no-cache-dir`, and run the public smoke check.
+6. Upload the identical tested wheels to PyPI using its separate token. Verify a
+   fresh installation from the production index and repeat the smoke check.
+7. Tag the tested source commit once it is reachable from main. Create a GitHub
+   prerelease in yusufchestermorris/foliorivet with wheels, CLI bundles, checksums,
+   scope, known limits and the PyPI link. Keep inherited upstream release automation
+   disabled until a dedicated FolioRivet workflow has been reviewed.
 
 Official references: [TestPyPI](https://packaging.python.org/en/latest/guides/using-testpypi/),
 [GitHub releases](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository).
-Trusted Publishing is recommended for later automation; this first release is manual.
-
-Current execution: [0.1.0a1 validation](PREVIEW-VALIDATION.md).
+Do not put tokens in source, shell arguments or issue reports. For fixes, publish
+an incremented alpha version; yank materially broken releases rather than replacing
+existing files. See STATUS.md for the actual first-alpha qualification scope.

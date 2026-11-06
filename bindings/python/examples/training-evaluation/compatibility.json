@@ -1,0 +1,15 @@
+{
+  "status": "LOCAL CANDIDATE; public release pending",
+  "authorship": "Original synthetic XML, text and input authored for FolioRivet; MIT OR Apache-2.0; no imported template or bundled fonts",
+  "windows_installed_native": "PASS CPython 3.12.12",
+  "native_preview": "Rendered and visually inspected: one page, legible, no clipping",
+  "word_review": "PASS automation (Word 16.0.20527 open/save/reopen/export 1 page); independent interactive prompt review PENDING",
+  "files": {
+    "generated.docx": "99277650b217e8c95bcac08289da9e7a1cfb42d7b5268da39f1738bc7c9cf5cc",
+    "preview.png": "45b9ceb683b3e6bcaec7dd100e4017b4151b17be458212a27435751dcd4ea6d1",
+    "template.docx": "3b24751a5a7cad8afb2a6d5d27b1d70ce201b468fd2911940e6f5691e6709bdb"
+  },
+  "linux_installed_native": "PASS CPython 3.12.12, Ubuntu 22.04 WSL2, manylinux_2_35 candidate",
+  "public_example_smoke": "PASS on Windows/Linux; identical Python/CLI members and cross-platform output hash",
+  "scope": "Synthetic public example; historical observations only. Independent Word and clean-host adoption checks remain deferred, not alpha gates."
+}

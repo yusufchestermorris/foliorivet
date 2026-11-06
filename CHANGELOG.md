@@ -12,3 +12,15 @@ Unreleased, 6 November 2026.
 Experimental scope: no universal OOXML preservation, desktop release, nested
 variable blocks, reference-bearing repeat prototypes, abi3 or Python versions
 other than 3.12. Final release clearance and separate-machine acceptance pending.
+
+## Source checkout cleanup
+
+- Commit all three synthetic examples and previews; remove local paths from their
+  public compatibility records and retain example/template notices.
+- Keep local plans, qualification ledgers, machine wrappers and historical private
+  test harnesses out of Git. Public installed native/CLI tests use committed inputs.
+- Retain all upstream licenses and attribution; remove only unreferenced exact
+  duplicate notice copies and preserve inventoried bytes across checkout platforms.
+- Make CLI notice assembly and contributor instructions independent of private
+  build folders. Public documentation excludes local records from site generation.
+- No engine behavior, published wheel, package version or existing tag is changed.

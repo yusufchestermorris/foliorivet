@@ -16,7 +16,6 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import re
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -128,7 +127,7 @@ def test_readme_links_and_snippet(repo_root: Path, staging_dir: Path) -> None:
 
     # Execute snippet in isolated namespace
     namespace: dict = {}
-    exec(adapted_snippet, namespace)
+    subprocess.run([sys.executable, "-I", "-c", adapted_snippet], cwd=repo_root, check=True)
     assert test_output_path.is_file(), "README snippet did not create expected output file"
     assert test_output_path.stat().st_size > 1000, "README snippet generated file too small"
     log("  [OK] README quickstart Python snippet executed and verified.")
@@ -165,19 +164,8 @@ def test_bidirectional_validation(repo_root: Path) -> None:
 
 def test_mkdocs_build(repo_root: Path) -> None:
     log("Verifying MkDocs documentation build with --strict...")
-    mkdocs_bin = shutil.which("mkdocs")
-    if not mkdocs_bin:
-        # Check inside common venvs
-        candidate = repo_root.parent / ".tooling" / "release-010-test" / "Scripts" / "mkdocs.exe"
-        if candidate.is_file():
-            mkdocs_bin = str(candidate)
-
-    if not mkdocs_bin:
-        log("  [WARN] mkdocs executable not in PATH; skipping build test.")
-        return
-
     result = subprocess.run(
-        [mkdocs_bin, "build", "--strict"],
+        [sys.executable, "-m", "mkdocs", "build", "--strict"],
         cwd=str(repo_root),
         capture_output=True,
         text=True,

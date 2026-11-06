@@ -1,51 +1,18 @@
-# Experimental template bindings
+# Experimental native DOCX templates
 
-Experimental preview 0.1.0a1, based on WordCraft revision
-`92ecb40105f56b674c18e3e88557e1456591868b` plus FolioRivet fidelity and template patches. Publication remains on HOLD
-until the preview release checklist is complete. The Python package is `foliorivet`.
+FolioRivet 0.1.0a1 provides thin synchronous Python bindings to the WordCraft-based
+Rust engine. CPython 3.12 x64, Windows and Linux glibc 2.35+ only. Word is not
+required for generation. Install the matching binary wheel from PyPI:
 
-The core operation lives in `crates/engine/src/template.rs`. This isolated PyO3
-crate calls it directly; no subprocess, Word installation or desktop window is
-used for generation. Its separate lockfile starts from the upstream lockfile,
-adding PyO3 dependencies without changing the engine's resolved build inputs.
-Python build dependencies are excluded from the upstream Rust/wasm workspace.
-
-## Installed-wheel quick start
-
-Use a clean CPython 3.12 x64 environment. Install the locally built wheel using
-`python -m pip install --no-index /path/to/foliorivet-0.1.0a1-...whl`. A matching
-prebuilt wheel requires no Rust compiler at installation or generation time.
-Building from source requires Rust 1.95, platform linker/build tools and
-`maturin==1.10.2`; source-distribution installation is not qualified.
-
-Run from outside the source tree:
-
-```python
-from pathlib import Path
-from foliorivet import inspect_template, preflight_template, render_template
-
-template = Path("scalar-template.docx")
-inspection = inspect_template(template)
-print(inspection)
-context = {
-    "metadata": {"model_id": "Example 42 — café"},
-    "labels": {
-        target["tag"].removeprefix("value:labels."): "Review — Ω"
-        for target in inspection["targets"]
-        if target["tag"].startswith("value:labels.")
-    },
-}
-print(preflight_template(template, context))
-Path("staging").mkdir(exist_ok=True)
-output = render_template(template, context, "", Path("staging/report.docx"))
-print(output)
+```text
+python -m pip install --only-binary=:all: foliorivet==0.1.0a1
+python -I bindings/python/examples/training-evaluation/generate.py NEW_OUTPUT.docx
 ```
 
-The same code is runnable as `python -I quickstart.py TEMPLATE NEW_OUTPUT` with
-the supplied scalar fixture. For the comprehensive installed example, use
-`tests/installed_smoke.py REPO EVIDENCE CLI`. The script discovers its label tags,
-constructs synthetic input, and exercises an actually installed extension. Evidence
-and tested environments are recorded in `docs/wordcraft/evidence/STAGE3.md`.
+From a source checkout, preserve the templates and create the output parent first.
+See examples/ for three synthetic templates, inputs, generators, reference outputs
+and previews. See ../../docs/release/BUILD.md and ../../CONTRIBUTING.md for builds
+and tests. No private fixture or report is required.
 
 ## Contract
 
@@ -87,8 +54,8 @@ Inherited engine roundtrips normalize some style metadata/theme links; scalar
 population adds no further style changes in the executed fixture. This is a
 bounded fidelity finding, not complete preservation of all OOXML style metadata.
 
-Scalar-only templates require `assets_dir=""`. The bounded Stage 4 operations
-below add `rows:` and `image:` support. Stage 5 adds the bounded `repeat:` and
+Scalar-only templates require `assets_dir=""`. The bounded row/picture operations
+below add `rows:` and `image:` support. Block support adds the bounded `repeat:` and
 `if:` conventions documented below; qualification status is recorded separately.
 
 `inspect_template(path) -> dict` and `preflight_template(path, context, assets_dir="") -> dict`
@@ -98,7 +65,7 @@ save success or visual layout. Errors use `foliorivet.TemplateError` with operat
 target, scope and an actionable message. Wrong Python argument types can
 also raise standard Python `TypeError`.
 
-## Stage 4 rows and existing chart assets
+## Rows and existing chart assets
 
 `rows:class_distribution` must wrap exactly one complete non-header data row in
 a top-level body table. A separate static/header row must remain. The context
@@ -151,8 +118,7 @@ existing output paths. A failed filesystem write can still leave a staging file.
 
 The original synthetic [invoice example](examples/invoice/README.md) uses only
 these public APIs, with all business amounts supplied in Python JSON input.
-Executed qualification and pending Word review are recorded in
-[`STAGE4.md`](../../docs/wordcraft/evidence/STAGE4.md).
+Qualification scope is recorded in ../../docs/release/STATUS.md.
 
 CLI commands use the existing registry:
 
@@ -172,7 +138,7 @@ The native extension is CPython 3.12 specific; no abi3 or wider version support 
 claimed. Linux wheels currently use a `linux_x86_64` tag and require the tested
 native runtime libraries; manylinux distribution is not qualified.
 
-## Stage 5 repeated and optional blocks
+## Repeated and optional blocks
 
 `repeat:class_training_results` wraps a complete logical body block, including
 its heading, paragraphs, tables, chart slot and associated spacing. Its input
@@ -197,7 +163,7 @@ Nested repeat/if blocks, wrappers in headers/footers or table cells, partial
 paragraph boundaries, actual section breaks inside variable blocks, numbering,
 bookmarks, fields, notes, comment anchors, hyperlinks, tracked changes, unknown
 objects and background pictures are rejected. Complete tables may retain their
-internal geometry and merges; nested row expansion retains Stage 4 restrictions.
+internal geometry and merges; nested row expansion retains row restrictions.
 Ordinary uncropped inline pictures reuse the media store; output drawing IDs
 are assigned by the existing writer. Consumed repeated wrappers/item controls
 are removed, leaving ordinary editable content and manual-comment areas.
@@ -212,15 +178,9 @@ CLI `template.populateBlocks` accepts `{context, assets_dir}` and supports undo;
 `template.render`, inspection, preflight and the native Python API select the
 same shared resolver automatically. The scalar-only command stays scalar-only.
 
-The Stage 5 matrix and project-status example are in `tests/stage5_smoke.py`
-and `examples/project-status/`. See `docs/wordcraft/evidence/STAGE5.md` for actual
-qualification and Word review status. No production integration is implied.
+The public native/CLI regression runs all three examples; see tests/README.md.
 
-## Qualification build inputs
+## Build inputs
 
-For reproducible qualification builds, check out the repository's `craft-i18n.rev`
-and set `CRAFT_I18N_DIR` to that checkout and `CRAFT_I18N_REQUIRED=1` before
-building both the CLI and native wheel. Missing language data otherwise silently
-reduces proofing/hyphenation capabilities. Linux layout tests also require a CJK
-font such as the system-installed Noto Sans CJK. These inputs do not widen the
-supported Python/platform scope. See `docs/wordcraft/evidence/remediation/README.md`.
+Use pinned craft-i18n data with CRAFT_I18N_REQUIRED=1 for consistent proofing.
+See ../../docs/release/BUILD.md. Production qualification is outside alpha scope.

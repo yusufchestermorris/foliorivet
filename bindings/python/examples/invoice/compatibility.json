@@ -1,0 +1,45 @@
+{
+  "status": "PASS installed Windows/Linux and automated Word open/save/reopen plus agent visual review; independent prompt review PENDING",
+  "word_version": "16.0",
+  "word_build": "16.0.20527",
+  "platform_results": [
+    {
+      "platform": "windows",
+      "word_build": "16.0.20527",
+      "open_save_reopen": "PASS automation",
+      "reopened_pages": 1,
+      "tables": [
+        {
+          "rows": 4,
+          "columns": 4
+        }
+      ],
+      "case": "invoice",
+      "pages": 1,
+      "word_version": "16.0",
+      "input_sha256": "98B903A75ED7E1DED9DB778BF6DB7B7D47CF50BDDB0C58BF18CC6C4E3B2F8912",
+      "repair_dialog_review": "PENDING independent interactive review"
+    },
+    {
+      "platform": "linux",
+      "word_build": "16.0.20527",
+      "open_save_reopen": "PASS automation",
+      "reopened_pages": 1,
+      "tables": [
+        {
+          "rows": 4,
+          "columns": 4
+        }
+      ],
+      "case": "invoice",
+      "pages": 1,
+      "word_version": "16.0",
+      "input_sha256": "98B903A75ED7E1DED9DB778BF6DB7B7D47CF50BDDB0C58BF18CC6C4E3B2F8912",
+      "repair_dialog_review": "PENDING independent interactive review"
+    }
+  ],
+  "template_sha256": "921f5a9e1776d1bacdd3a13d6f532084ae8020b3f6e3710faf915fd99f8cd02a",
+  "generated_sha256": "98b903a75ed7e1ded9db778bf6db7b7d47cf50bddb0c58bf18cc6c4e3b2f8912",
+  "fonts": "Liberation Sans in Normal; named/style theme references, no font binaries bundled",
+  "scope": "Synthetic public example; historical observations only. Independent Word and clean-host adoption checks remain deferred, not alpha gates."
+}

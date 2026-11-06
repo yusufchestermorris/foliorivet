@@ -19,8 +19,8 @@ FolioRivet 0.1.0 is an **experimental public preview** release.
 
 FolioRivet is distributed under the dual license terms of:
 
-- **MIT License** ([`LICENSE-MIT`](https://github.com/foliorivet/foliorivet/blob/main/LICENSE-MIT))
-- **Apache License, Version 2.0** ([`LICENSE-APACHE`](https://github.com/foliorivet/foliorivet/blob/main/LICENSE-APACHE))
+- **MIT License** ([`LICENSE-MIT`](https://github.com/yusufchestermorris/foliorivet/blob/main/LICENSE-MIT))
+- **Apache License, Version 2.0** ([`LICENSE-APACHE`](https://github.com/yusufchestermorris/foliorivet/blob/main/LICENSE-APACHE))
 
 You may choose either license at your option.
 

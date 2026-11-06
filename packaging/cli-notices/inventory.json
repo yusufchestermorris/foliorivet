@@ -1,0 +1,116 @@
+{
+  "scope": "CLI-only supplement to bindings/python/python/foliorivet/licenses/dependencies; Windows/Linux x64 normal/build declaration superset, not a binary SBOM",
+  "packages": [
+    {
+      "name": "sys-locale",
+      "version": "0.3.2",
+      "declared_license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "file": "00-LICENSE-APACHE",
+          "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        },
+        {
+          "file": "01-LICENSE-MIT",
+          "sha256": "5cc390ab5e5e6507f467368cbab1297552d64bfd863f4b496c7928508bcfefd8",
+          "source": "registry+https://github.com/rust-lang/crates.io-index"
+        }
+      ],
+      "review": "texts collected; inclusion and obligations require review"
+    },
+    {
+      "name": "wordcraft-cli",
+      "version": "0.15.1",
+      "declared_license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "file": "00-LICENSE-APACHE",
+          "sha256": "eb3d7b5485466acbd81f2b496f595ab637d2792e268206b27d99e793bdb67549",
+          "source": "workspace source"
+        },
+        {
+          "file": "01-LICENSE-MIT",
+          "sha256": "a15941cbcb0e32a2ef09d2da5d0b90bea3a3ebbdf5fb075c3f7dfde7af95b3ab",
+          "source": "workspace source"
+        },
+        {
+          "file": "02-NOTICE",
+          "sha256": "9dd15df4ed3cb6069f3ad4efb1b402961f19462ca6e7cc445da468733a7c1333",
+          "source": "workspace source"
+        }
+      ],
+      "review": "texts collected; inclusion and obligations require review"
+    },
+    {
+      "name": "wordcraft-control-key",
+      "version": "0.15.1",
+      "declared_license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "file": "00-LICENSE-APACHE",
+          "sha256": "eb3d7b5485466acbd81f2b496f595ab637d2792e268206b27d99e793bdb67549",
+          "source": "workspace source"
+        },
+        {
+          "file": "01-LICENSE-MIT",
+          "sha256": "a15941cbcb0e32a2ef09d2da5d0b90bea3a3ebbdf5fb075c3f7dfde7af95b3ab",
+          "source": "workspace source"
+        },
+        {
+          "file": "02-NOTICE",
+          "sha256": "9dd15df4ed3cb6069f3ad4efb1b402961f19462ca6e7cc445da468733a7c1333",
+          "source": "workspace source"
+        }
+      ],
+      "review": "texts collected; inclusion and obligations require review"
+    },
+    {
+      "name": "wordcraft-mcp",
+      "version": "0.15.1",
+      "declared_license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "file": "00-LICENSE-APACHE",
+          "sha256": "eb3d7b5485466acbd81f2b496f595ab637d2792e268206b27d99e793bdb67549",
+          "source": "workspace source"
+        },
+        {
+          "file": "01-LICENSE-MIT",
+          "sha256": "a15941cbcb0e32a2ef09d2da5d0b90bea3a3ebbdf5fb075c3f7dfde7af95b3ab",
+          "source": "workspace source"
+        },
+        {
+          "file": "02-NOTICE",
+          "sha256": "9dd15df4ed3cb6069f3ad4efb1b402961f19462ca6e7cc445da468733a7c1333",
+          "source": "workspace source"
+        }
+      ],
+      "review": "texts collected; inclusion and obligations require review"
+    },
+    {
+      "name": "wordcraft-zotero",
+      "version": "0.15.1",
+      "declared_license": "MIT OR Apache-2.0",
+      "notices": [
+        {
+          "file": "00-LICENSE-APACHE",
+          "sha256": "eb3d7b5485466acbd81f2b496f595ab637d2792e268206b27d99e793bdb67549",
+          "source": "workspace source"
+        },
+        {
+          "file": "01-LICENSE-MIT",
+          "sha256": "a15941cbcb0e32a2ef09d2da5d0b90bea3a3ebbdf5fb075c3f7dfde7af95b3ab",
+          "source": "workspace source"
+        },
+        {
+          "file": "02-NOTICE",
+          "sha256": "9dd15df4ed3cb6069f3ad4efb1b402961f19462ca6e7cc445da468733a7c1333",
+          "source": "workspace source"
+        }
+      ],
+      "review": "texts collected; inclusion and obligations require review"
+    }
+  ],
+  "missing": []
+}

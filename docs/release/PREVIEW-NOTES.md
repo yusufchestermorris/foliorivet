@@ -1,6 +1,6 @@
-# FolioRivet 0.1.0a1 — experimental public preview
+# FolioRivet 0.1.0a1 â€” experimental public preview
 
-DRAFT: publish only after PREVIEW.md gates pass.
+Published Python package: https://pypi.org/project/foliorivet/0.1.0a1/.
 
 FolioRivet is an experimental native DOCX template engine based on WordCraft by
 the ArtCraft team. It supports bounded scalar, table-row, inline-picture and
@@ -20,8 +20,7 @@ Download and extract the separate CLI bundle from this release; run
 Nested variable blocks, arbitrary expressions, floating/cropped picture slots
 and reference-bearing repeat prototypes are unsupported.
 Generation uses native code; matching prebuilt wheels need no Rust compiler.
-Runtime/font requirements and final target-machine findings must be recorded
-before publishing this draft. Report issues with platform/Python versions,
+Clean-host and production-adoption qualification remain deferred. Report issues with platform/Python versions,
 a minimal redistributable template, input and error message; omit private reports.
 
 See COMPATIBILITY.md for limits and the included licenses for redistribution notices.

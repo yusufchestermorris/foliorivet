@@ -1,74 +1,33 @@
-# 0.1.0a1 experimental preview status
+# Experimental alpha status
 
-Updated 6 November 2026. IN PREPARATION; publication HOLD.
+FolioRivet 0.1.0a1 is published on [PyPI](https://pypi.org/project/foliorivet/0.1.0a1/).
+Source fork: https://github.com/yusufchestermorris/foliorivet.
+The published wheels were built from ad194fb5 (WordCraft-based Rust engine plus
+FolioRivet native templating changes). This source cleanup does not replace those
+artifacts or move the release tag.
 
-Implemented: shared Rust scalar, row, inline-picture, repeat/conditional-block
-operations; strict scoped diagnostics; synchronous native Python API and CLI.
-Historical installed Windows/Linux and Word review evidence is recorded in the
-canonical plan. Stage 7 found the bounded prototype feasible, not production-ready.
+CPython 3.12 x64: Windows and Linux glibc 2.35+ (initial Linux qualification on
+Ubuntu 22.04/WSL2). No macOS, ARM, desktop, abi3 or sdist promise.
 
-The current release work targets CPython 3.12, Windows x64 and Ubuntu 22.04 x64;
-Python wheels and CLI only. No desktop or broader compatibility promise.
+Recorded checks: all nine Windows cargo xtask ci steps passed. Rebuilt Windows/Linux
+wheels passed installed regressions and three Python/CLI examples. TestPyPI and
+production PyPI Linux installations passed those examples, with matching hashes.
+WSL is not an independent clean host. Known historical Linux full-workspace UI and
+timing failures are not represented as a passing Linux full-CI result.
 
-Pending acceptance:
+Clean-host/Windows-without-Office qualification, independent Word review, measured
+onboarding and production integration are deferred to adoption. APIs and behavior
+may change. New templates need their own structural and visual review.
+Private execution logs and historical plans are retained locally, not required by
+public builds. See BUILD.md, COMPATIBILITY.md and LICENSING.md.
 
-- Final human legal/redistribution clearance of collected dependency and asset notices.
-- Independent clean-machine installation and interactive Word repair-prompt review.
-- PyPI release-account configuration and verified ownership (historical availability is not reservation).
-- Reviewed source/history export; GitHub fork and package URLs are now configured.
-- Final human Git commit, tagging, and publication approval.
+## Public source cleanup checks
 
-Production-source access and opt-in shadow integration are deferred to adoption;
-they do not gate this experimental preview. Clean-machine installation and final
-independent Word review remain preview acceptance checks.
-
-Historical evidence and original handoff artifacts are preserved privately during
-cleanup. No commit, push, tag, public repository, package upload or production
-cutover has occurred. Previous passing evidence retains its original scope;
-changes made during release preparation require their own checks.
-
-## Work executed on 6 November
-
-- Replaced the upstream product README and exposed foliorivet-cli 0.1.0 while
-  retaining the upstream binary target for existing tooling.
-- Archived eight ArtCraft logo/mark files; preserved the separate brand license,
-  upstream code licenses and NOTICE. Added modification notices to changed
-  tracked source files. Upstream license/NOTICE contents match HEAD after normal
-  CRLF normalization; no terms or attribution were removed.
-- Collected exact notice texts for the 232-package binding and 226-package CLI
-  Windows/Linux normal/build dependency supersets. The five objc2 packages and
-  r-efi are absent from these target graphs. Missing alloc-stdlib/wuff texts were
-  obtained from the exact Cargo-recorded upstream revisions. This closes source
-  text detection for these graphs, not final binary-resource/legal clearance.
-- Built both development-profile and optimized release-profile Windows and
-  manylinux_2_35 Linux wheels and CLI bundles (`dist/release-windows`,
-  `dist/release-linux`). Maturin accepted the Linux compatibility audit.
-- Fresh installed scalar, row/picture and block suites pass on both platforms;
-  block suite reports 16 combinations each. All three examples pass Python/CLI
-  ZIP-member equality and existing-output refusal on both platforms. Their
-  generated DOCX hashes also agree across platforms.
-- Repaired Word review automation harness (`review-word.ps1`) by adding non-blocking
-  display alert suppression. Word 16.0.20527 automation passed open/save/reopen/export
-  on `training-evaluation` (1 page), `invoice` (1 page), and `project-status`.
-- Isolated Linux timing test passes (13.92 ratio vs < 24.0 threshold). Intermittent
-  aggregate failure investigated: identified as thread and allocator contention
-  in virtualized WSL2 schedstat counters under parallel test runner. Assertion
-  strictly preserved without relaxing thresholds.
-- Rust formatting, Python tool compilation, asset attribution (49 active assets)
-  and layering (19 crates) checks pass.
-- Verified name availability: `foliorivet` is unregistered and available on PyPI
-  (JSON API 404, 0 search results) and GitHub (0 search results).
-- Maintained detailed preparation ledger in `docs/release/0.1.0-preparation.md`.
-- Archived and verified 89 top-level scripts/logs and 2,625 non-cache evidence
-  files. The entire evidence directory, including generated runs, is retained
-  privately; the content manifest excludes generated runs/caches. An ignored
-  local junction preserves historical paths. Original handoff packages remain.
-
-Artifacts are under dist/ and recorded in candidate-manifest.json.
-Private execution logs and archive manifests are under the workspace's
-.private-archive/release-prep-20261106/. Current source includes later notice and
-documentation additions; candidates remain local preparation artifacts, not a frozen
-release. Final source-export review, example redistribution review, and public-release
-approval are still required.
-
-Current execution: [0.1.0a1 validation](PREVIEW-VALIDATION.md).
+All nine Windows CI steps passed again for the cleanup. The staged public-only
+source passed Windows and Linux installed native/CLI example checks, strict
+documentation build, README executable example and link checks, exact notice-hash
+checks and local artifact assembly. A changed-notice negative check rejects the
+artifact before output creation. Example ZIP/XML properties, relationship targets,
+JSON records, PNG metadata and document-only previews were checked for personal
+content; local paths were removed from the public compatibility record.
+These checks do not claim a new Linux full-CI run or clean-host qualification.

@@ -22,6 +22,14 @@ def main():
         cli_output=args.output.resolve()/(name+'-cli.docx')
         foliorivet.inspect_template(template)
         foliorivet.preflight_template(template,context)
+        # A source checkout must exercise the installed API's failure paths too.
+        for bad_context in ('{', {}):
+            try:
+                foliorivet.preflight_template(template,bad_context)
+            except foliorivet.TemplateError:
+                pass
+            else:
+                raise RuntimeError(name+': invalid or missing input was accepted')
         foliorivet.render_template(template,context,'',native)
         try:
             foliorivet.render_template(template,context,'',native)
@@ -39,7 +47,7 @@ def main():
         if hashlib.sha256(template.read_bytes()).hexdigest()!=before:
             raise RuntimeError(name+': template changed')
         results.append({'example':name,'template_sha256':before,'output_sha256':hashlib.sha256(native.read_bytes()).hexdigest(),'native_cli_agreement':'PASS','existing_output_refused':True})
-    report={'status':'PASS','python':sys.version,'platform':platform.platform(),'module':foliorivet.__file__,'examples':results,'word_review':'separate required review','production_pipeline':'not exercised'}
+    report={'status':'PASS','python':sys.version,'platform':platform.platform(),'module':foliorivet.__file__,'examples':results,'word_review':'deferred adoption check; not an alpha gate','production_pipeline':'not exercised'}
     (args.output/'result.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
     print(json.dumps(report,indent=2))
 
