@@ -21,6 +21,8 @@ pub enum Refusal {
     TooLarge { width: u32, height: u32 },
     /// The header or the data is damaged.
     Broken(String),
+    /// A decoder enforced an allocation or dimension limit.
+    DecoderLimit(String),
 }
 
 impl std::fmt::Display for Refusal {
@@ -29,6 +31,7 @@ impl std::fmt::Display for Refusal {
             Refusal::NotAPicture => f.write_str("not a supported picture (PNG, JPEG, GIF, WebP, BMP or TIFF)"),
             Refusal::Unsupported(what) => f.write_str(what),
             Refusal::TooLarge { width, height } => write!(f, "the picture is too large ({width} × {height} pixels)"),
+            Refusal::DecoderLimit(why) => write!(f, "decoder-enforced image limit ({why})"),
             Refusal::Broken(why) => write!(f, "the picture is damaged ({why})"),
         }
     }
@@ -37,7 +40,10 @@ impl std::fmt::Display for Refusal {
 impl std::error::Error for Refusal {}
 
 fn broken(e: image::ImageError) -> Refusal {
-    Refusal::Broken(e.to_string())
+    match e {
+        image::ImageError::Limits(_) => Refusal::DecoderLimit(e.to_string()),
+        _ => Refusal::Broken(e.to_string()),
+    }
 }
 
 /// What a picture's header says: its format, its size and the memory decoding it takes. Reading
@@ -51,6 +57,8 @@ pub struct Probe<'a> {
     pub width: u32,
     pub height: u32,
     peak: u64,
+    color: image::ColorType,
+    held: u64,
 }
 
 /// TIFF compressions decoded within the caller's limits: none, CCITT Group 4, LZW, Deflate (both
@@ -74,7 +82,7 @@ pub fn probe(bytes: &[u8]) -> Result<Probe<'_>, Refusal> {
     };
     let decoder = image::ImageReader::with_format(Cursor::new(bytes), format).into_decoder().map_err(broken)?;
     let (width, height, peak) = measure(&decoder, held)?;
-    Ok(Probe { bytes: Cow::Borrowed(bytes), dib: false, format, width, height, peak })
+    Ok(Probe { bytes: Cow::Borrowed(bytes), dib: false, format, width, height, peak, color: decoder.color_type(), held })
 }
 
 /// Read a DIB's header: a BMP without its 14-byte file header, as the Windows clipboard holds
@@ -82,11 +90,12 @@ pub fn probe(bytes: &[u8]) -> Result<Probe<'_>, Refusal> {
 /// [`dib_layout`]).
 pub fn probe_dib(dib: Vec<u8>) -> Result<Probe<'static>, Refusal> {
     let dib = dib_layout(dib);
-    let (width, height, peak) = {
+    let (width, height, peak, color) = {
         let decoder = image::codecs::bmp::BmpDecoder::new_without_file_header(Cursor::new(dib.as_slice())).map_err(broken)?;
-        measure(&decoder, 0)?
+        let (width, height, peak) = measure(&decoder, 0)?;
+        (width, height, peak, decoder.color_type())
     };
-    Ok(Probe { bytes: Cow::Owned(dib), dib: true, format: ImageFormat::Bmp, width, height, peak })
+    Ok(Probe { bytes: Cow::Owned(dib), dib: true, format: ImageFormat::Bmp, width, height, peak, color, held: 0 })
 }
 
 /// A decoder's size and the peak bytes of decoding it, `held` bytes kept beside its output.
@@ -101,6 +110,23 @@ fn measure(decoder: &impl ImageDecoder, held: u64) -> Result<(u32, u32, u64), Re
 }
 
 impl Probe<'_> {
+    /// Conservative reservation breakdown, not a measurement of process memory.
+    pub fn allocation_description(&self) -> String {
+        // Dimensions are public; saturate diagnostics even if a caller changes them.
+        let pixels = u64::from(self.width) * u64::from(self.height);
+        let native = pixels.saturating_mul(u64::from(self.color.bytes_per_pixel()));
+        format!(
+            "representation={:?}, native_output={} bytes, decoder_held={} bytes, conversion_reservation={} bytes, output_plus_rgba8={} bytes, two_rgba8={} bytes, estimated_peak={} bytes",
+            self.color,
+            native,
+            self.held,
+            pixels.saturating_mul(4),
+            native.saturating_add(pixels.saturating_mul(4)),
+            pixels.saturating_mul(8),
+            self.peak
+        )
+    }
+
     /// Bytes decoding takes at its peak.
     pub fn peak_bytes(&self) -> u64 {
         self.peak
@@ -311,6 +337,8 @@ mod tests {
         let p = probe(&png).unwrap();
         assert_eq!((p.format, p.width, p.height), (ImageFormat::Png, 16, 8));
         assert_eq!(p.peak_bytes(), 16 * 8 * 8, "RGBA8: the decode beside its premultiplied copy");
+        assert!(p.allocation_description().contains("native_output=512 bytes"));
+        assert_eq!(peak_bytes(3571, 2366, 4, 0), Some(67_591_888));
         assert!(p.fits(1024) && !p.fits(1023));
         assert_eq!(p.decode(1 << 20).unwrap().to_rgba8().get_pixel(3, 3).0, [1, 2, 3, 4]);
         assert_eq!(p.decode(1023), Err(Refusal::TooLarge { width: 16, height: 8 }));
@@ -490,5 +518,49 @@ mod tests {
         for d in [short, lying] {
             assert!(probe_dib(d).and_then(|p| p.decode(1 << 20)).is_err());
         }
+    }
+    #[test]
+    fn rgb_palette_and_corrupt_inputs_keep_distinct_refusals() {
+        let rgb = encode(image::RgbImage::from_pixel(2, 3, image::Rgb([9, 8, 7])), ImageFormat::Png);
+        let pic = probe(&rgb).unwrap();
+        assert_eq!(pic.peak_bytes(), 48);
+        assert!(pic.allocation_description().contains("native_output=18 bytes"));
+        assert!(pic.decode(48).is_ok());
+        assert!(matches!(pic.decode(47), Err(Refusal::TooLarge { .. })));
+        // One indexed PNG pixel; uncompressed zlib scanline [filter=0, palette index=0].
+        let mut png = b"\x89PNG\r\n\x1a\n".to_vec();
+        for (kind, data) in [
+            (b"IHDR", vec![0, 0, 0, 1, 0, 0, 0, 1, 8, 3, 0, 0, 0]),
+            (b"PLTE", vec![9, 8, 7]),
+            (b"IDAT", vec![0x78, 1, 1, 2, 0, 0xfd, 0xff, 0, 0, 0, 2, 0, 1]),
+            (b"IEND", vec![]),
+        ] {
+            png.extend((data.len() as u32).to_be_bytes());
+            let mut chunk = kind.to_vec();
+            chunk.extend(data);
+            png.extend(&chunk);
+            png.extend(crc32(&chunk).to_be_bytes());
+        }
+        let pic = probe(&png).unwrap();
+        assert_eq!(pic.decode(8).unwrap().to_rgb8().get_pixel(0, 0).0, [9, 8, 7]);
+        let mut truncated = rgb.clone();
+        truncated.truncate(truncated.len() / 2);
+        assert!(decode(&truncated, 1024).is_err());
+        assert!(matches!(
+            broken(image::ImageError::Limits(image::error::LimitError::from_kind(image::error::LimitErrorKind::InsufficientMemory))),
+            Refusal::DecoderLimit(_)
+        ));
+        assert!(matches!(broken(image::ImageError::IoError(std::io::Error::from(std::io::ErrorKind::UnexpectedEof))), Refusal::Broken(_)));
+    }
+    #[test]
+    fn complete_progressive_jpeg_decodes_at_exact_reservation_boundary() {
+        let bytes = include_bytes!("../tests/data/progressive-rgb.jpg");
+        let p = probe(bytes).unwrap();
+        assert_eq!((p.width, p.height), (32, 16));
+        assert_eq!(p.held, 32 * 16 * 3 * 2);
+        assert_eq!(p.peak_bytes(), 32 * 16 * 9);
+        let rgb = p.decode(p.peak_bytes()).unwrap().to_rgb8();
+        assert!(rgb.pixels().all(|pixel| pixel.0 == [128, 128, 128]));
+        assert!(matches!(p.decode(p.peak_bytes() - 1), Err(Refusal::TooLarge { width: 32, height: 16 })));
     }
 }

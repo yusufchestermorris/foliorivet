@@ -1,7 +1,7 @@
-<!-- Modified for FolioRivet: native template fork changes; see docs/release/STATUS.md (2026-11-06). -->
+<!-- Modified for FolioRivet: release/source API and qualification synchronization; see docs/release/STATUS.md (2026-11-09). -->
 # FolioRivet
 
-**0.1.0a1 experimental alpha — available on PyPI.**
+**Published: 0.1.0a1 experimental alpha. Development checkout: unreleased improvements.**
 APIs and output behavior may change. Qualification covers documented fixtures only;
 new templates need independent review. Production migration is not approved.
 See [the manual release checklist](docs/release/PREVIEW.md).
@@ -20,20 +20,31 @@ Business users and designers format templates directly in Microsoft Word, while 
 
 > [!IMPORTANT]
 > **FolioRivet 0.1.0a1 is an experimental public preview.**
-> Supported template operations and platform matrices are deliberately bounded. Candidate wheels are prepared in `dist/` for qualification; public PyPI publication is pending final release clearance.
+> The published alpha is available on PyPI. The development checkout adds scalar fan-out,
+> context analysis, native conditional bullets and outer-condition/immediate-repeat composition.
+> These additions are implemented and locally qualified; they have not been published.
+
+Development qualification passes all nine Windows CI steps, 35 template and nine image
+regressions per platform, and installed CPython 3.12 wheel/CLI checks on Windows x64
+and Ubuntu 22.04 x64. Scope and remaining Word/visual, hostile-input and full Linux CI
+limitations are recorded in [release status](docs/release/STATUS.md).
 
 ---
 
 ## Features
 
+The following describes the current checkout; unreleased additions are marked explicitly.
+
 - **Scalar Values (`value:`)**: In-place text replacement preserving surrounding typography, bold/italic runs, and paragraph styling.
 - **Table Row Repetition (`rows:`)**: Duplicates a prototype row for each item in a data list, maintaining cell formatting, borders, and column widths.
 - **Picture Replacement (`image:`)**: Proportions raster images into an uncropped inline bounding box, maintaining aspect ratio, with optional fallback text.
 - **Repeating Blocks (`repeat:`)**: Repeats entire multi-paragraph and multi-table document sections.
-- **Conditional Sections (`if:`)**: Retains complete sections when `True`; excises sections cleanly without gaps when `False`.
-- **Static Template Inspection (`inspect_template`)**: Discovers declared targets, structural scopes, and diagnostics without requiring data.
-- **Preflight Validation (`preflight_template`)**: Validates data schemas, value limits, and image assets before touching disk.
-- **Atomic Staging Safety**: Refuses to overwrite existing files (`create_new`), eliminating accidental data destruction.
+- **Conditional Sections (`if:`)**: Keeps complete wrapped sections when `True` and removes their content, headings and spacing paragraphs when `False`. **Unreleased:** supports native bullets and immediate `repeat:` children.
+- **Scalar Fan-out (unreleased)**: Opt in with keyword-only `scalar_fanout=True` to fill repeated `value:` destinations in each effective scope, preserving each destination’s formatting. Strict uniqueness remains the default.
+- **Context Analysis (`analyze_context`, unreleased)**: Reports active required, inactive, missing and unused paths plus scoped diagnostics, without decoding assets or writing output.
+- **Static Template Inspection (`inspect_template`)**: Lists declared targets, locations, structural scopes and diagnostics without requiring data, including each scalar occurrence when fan-out is enabled.
+- **Preflight Validation (`preflight_template`)**: Validates data, structural limits and required image assets without modifying the template or writing output.
+- **Atomic Staging Safety**: Refuses to overwrite existing files (`create_new`).
 - **Zero Server Office Dependency**: Native Rust core parses and writes standard OpenXML (`.docx`) headlessly.
 - **Separation of Concerns**: Numerical totals, currency symbols, and business logic stay in your Python application; the engine stays strictly declarative.
 
@@ -41,44 +52,33 @@ Business users and designers format templates directly in Microsoft Word, while 
 
 ## Installation
 
-FolioRivet 0.1.0a1 provides precompiled native wheels for **CPython 3.12 x64** on Windows and Ubuntu 22.04 LTS.
+The published alpha provides native wheels for **CPython 3.12 x64** on Windows
+and Linux with glibc 2.35+ (qualified on Ubuntu 22.04 LTS).
 
-Install from a qualified local wheel package:
-
-=== "Windows (PowerShell)"
-
-    ```powershell
-    # Inside your CPython 3.12 virtual environment:
-    python -m pip install --no-index dist/release-windows/foliorivet-0.1.0a1-cp312-cp312-win_amd64.whl
-    ```
-
-=== "Ubuntu / Linux (bash)"
-
-    ```bash
-    # Requires glibc >= 2.35 (e.g. Ubuntu 22.04 LTS):
-    python3 -m pip install --no-index dist/release-linux/foliorivet-0.1.0a1-cp312-cp312-manylinux_2_35_x86_64.whl
-    ```
-
-Verify the installation:
+Inside your CPython 3.12 virtual environment, install the published version:
 
 ```bash
-python -c "import foliorivet; print('FolioRivet exports:', foliorivet.__all__)"
+python -m pip install --only-binary=:all: foliorivet==0.1.0a1
 ```
 
-Expected output:
-```text
-FolioRivet exports: ['TemplateError', 'render_template', 'inspect_template', 'preflight_template']
+To use the **unreleased features** documented below, build and install a wheel from
+this checkout using the [source build instructions](docs/release/BUILD.md).
+Installing the PyPI command above supplies the earlier alpha behavior.
+
+Verify which installation is being imported:
+
+```bash
+python -c "import foliorivet; print('FolioRivet loaded from:', foliorivet.__file__)"
 ```
 
-> [!NOTE]
-> When public distribution is officially enabled on PyPI, installation will simply be `pip install foliorivet`.
-> For platform prerequisites and troubleshooting, see the [Installation Guide](docs/getting-started/installation.md).
+For platform prerequisites and troubleshooting, see the
+[Installation Guide](docs/getting-started/installation.md).
 
 ---
 
 ## Quick Start
 
-Generate a complete document in five lines of Python using the included commercial quotation template:
+Use the included commercial quotation template with precomputed Python values:
 
 ```python
 from pathlib import Path
@@ -157,14 +157,39 @@ For complete authoring instructions with UI diagrams, see the [Word Template Aut
 
 ## Python API
 
-The `foliorivet` package exports four public symbols:
+The **development checkout** exports five public symbols. The published 0.1.0a1
+has the first three functions and `TemplateError`; it does not include the new
+`scalar_fanout` parameters or `analyze_context`.
 
-- [`render_template(template_path, context_json, assets_dir, output_path) -> str`](docs/api/rendering.md): Synchronously renders a template and context into a new staging DOCX file.
-- [`inspect_template(template_path) -> dict[str, Any]`](docs/api/inspection.md): Statically inspects a template, returning declared targets, structural scopes, and diagnostic health.
-- [`preflight_template(template_path, context_json, assets_dir="") -> dict[str, Any]`](docs/api/preflight.md): Validates context data, structural budgets, and image assets without modifying the template or writing output.
-- [`TemplateError`](docs/api/exceptions.md): Domain exception providing actionable diagnostic messages formatted as `<operation>: target=<target>, scope=<scope>: <message>`.
+- [`render_template(template_path, context_json, assets_dir, output_path, *, scalar_fanout=False) -> str`](docs/api/rendering.md): Render to a new staging DOCX path.
+- [`inspect_template(template_path, *, scalar_fanout=False) -> dict[str, Any]`](docs/api/inspection.md): List target occurrences, locations, scopes and diagnostics.
+- [`preflight_template(template_path, context_json, assets_dir="", *, scalar_fanout=False) -> dict[str, Any]`](docs/api/preflight.md): Validate context, structure, budgets and required image assets without writing output.
+- [`analyze_context(template_path, context_json, *, scalar_fanout=False) -> dict[str, Any]`](bindings/python/README.md#development-checkout-alpha-feedback-options): Return `active_required_paths`, `inactive_paths`, `missing_paths`, `unused_supplied_paths` and scoped `diagnostics`. Malformed JSON or invalid template structure raises `TemplateError`; ordinary context findings are returned.
+- [`TemplateError`](docs/api/exceptions.md): Template parsing, validation, resolution and rendering exception with operation, target and scope details.
 
-Type definitions and Pydantic integration examples are documented in [Types & Annotations](docs/api/types.md).
+With a development wheel installed, reuse `template` and `context` from the Quick Start:
+
+```python
+from foliorivet import analyze_context, inspect_template
+
+inspection = inspect_template(template, scalar_fanout=True)
+findings = analyze_context(template, context, scalar_fanout=True)
+print("Missing:", findings["missing_paths"])
+print("Unused:", findings["unused_supplied_paths"])
+```
+
+Fan-out applies only to scalar destinations. Images and variable wrappers retain
+unique-target requirements; row and repeat-item fields stay local to each instance.
+Missing or invalid conditions leave descendant activity undetermined. Analysis
+reports active consumer conflicts and continues reporting unused fields after an
+invalid context key. Preflight and rendering remain strict.
+
+The command registry exposes `template.analyzeContext` and equivalent options on
+structured inspect/preflight/population/render commands. Legacy raw-context
+`template.preflight` and `template.populateScalars` stay strict. See the
+[binding README](bindings/python/README.md#development-checkout-alpha-feedback-options)
+for the current Python/Rust/CLI contract and [Types & Annotations](docs/api/types.md)
+for context typing examples.
 
 ---
 
@@ -216,6 +241,7 @@ Full documentation is available in the `docs/` directory:
   - [`render_template`](docs/api/rendering.md)
   - [`inspect_template`](docs/api/inspection.md)
   - [`preflight_template`](docs/api/preflight.md)
+  - [`analyze_context` and development options](bindings/python/README.md#development-checkout-alpha-feedback-options)
   - [`TemplateError`](docs/api/exceptions.md)
   - [Types & Pydantic Integration](docs/api/types.md)
 - **Reference**:
@@ -256,14 +282,17 @@ Then open `http://127.0.0.1:8000/` in your browser.
 
 ## Limitations
 
-FolioRivet 0.1.0a1 enforces bounded structural guardrails to guarantee deterministic document generation:
+The development checkout supports the following bounded scope:
 
-- **No Nested Variable Blocks**: A `repeat:` block cannot contain an inner `repeat:` or `if:` block.
+- **Bounded Nesting**: A top-level `if:` may contain immediate sibling `repeat:` children. Nested conditionals and repeats containing `if:` or `repeat:` remain unsupported. The published 0.1.0a1 rejects all nested variable blocks.
+- **Lists**: Valid direct or style-inherited native bullets are supported in conditionals. Numbered/unresolved lists, and all numbering in repeats or repeated rows, remain unsupported. The published alpha also rejects conditional bullets.
 - **No Vertical Merges in Repeated Tables**: Vertical cell merges (`w:vMerge`) anywhere in a table targeted by `rows:` are unsupported.
-- **Uncropped Inline Images Only**: Picture replacement slots must use inline text wrapping and be uncropped. Floating images, SVG, and OLE objects are not supported in 0.1.0a1 replacement slots.
-- **Overwrite Protection**: `render_template` refuses to overwrite existing files. Output must target a new path in an existing directory.
-- **Resource Bounds**: 1 MiB context JSON, 64 KiB per scalar, 1,000 table rows, 1,000 repeated items, and 16 MiB expansion budgets.
-- **Declarative Only**: FolioRivet does not evaluate mathematical expressions or format dates/currencies. Perform all data transformations in Python.
+- **Uncropped Inline Images Only**: Replacement slots accept supported PNG/JPEG assets. Floating/cropped images, SVG and OLE slots are unsupported. Original media bytes and aspect ratio are preserved.
+- **Overwrite Protection**: `render_template` requires a new output path in an existing directory. A failed filesystem write may leave a new incomplete staging file; retry using a fresh path.
+- **Document-wide Bounds**: 1 MiB context JSON, 64 KiB per scalar and 1,024 template target occurrences. Separate ceilings of 1,000 repeated items and 1,000 data rows aggregate across independent and nested operations. Prototype-copy and expanded-output reservations share 16 MiB across the document; counters do not reset per item or conditional.
+- **Image Reservation**: Encoded assets are limited to 16 MiB each. The 64 MiB conservative pixel/decode/conversion reservation is an allocation estimate, not measured process memory. A 3571 × 2366 image has an eight-byte-per-pixel floor of 67,591,888 bytes, above the 67,108,864-byte limit. Images are not resized or recompressed automatically.
+- **Control Retention**: Document and conditional scalar controls may remain in the output. Variable wrappers and repeated-item controls are consumed.
+- **Declarative Only**: FolioRivet does not evaluate expressions or format dates/currencies. Perform those transformations in Python.
 
 For the exhaustive list of bounded constraints, see [Known Limitations](docs/reference/limitations.md).
 

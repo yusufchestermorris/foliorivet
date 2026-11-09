@@ -47,3 +47,6 @@ venv/
 
 # Optional public build input checkout.
 /.deps/
+
+# Local GitNexus index.
+/.gitnexus/

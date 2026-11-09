@@ -47,3 +47,28 @@ production authentication. Paragraph assembly now reuses finished block allocati
 WASM checks pass with upstream unused-code warnings. Linux was not rebuilt for
 this integration. The existing alpha tag and PyPI wheels remain at their original
 source revision and are not replaced by this development merge.
+
+
+## Unreleased alpha feedback changes — 9 November 2026
+
+The development checkout adds conditional native bullets, conservative image
+allocation diagnostics, opt-in scalar fan-out, outer-condition/immediate-repeat
+composition and non-rendering context analysis. Published wheels are unchanged.
+Shared document budgets cover independent and nested operations. Legacy Rust and
+raw-context command entry points retain strict defaults.
+
+Windows full CI passes all nine steps. Fresh optimized CPython 3.12 Windows/Linux
+x64 wheels pass bounded installed API/CLI checks and the three public examples;
+eight cross-platform DOCX package pairs match. Five synthetic outputs also pass
+automated Word save/reopen, without establishing interactive repair-prompt or
+visual fidelity findings. Full Linux CI and broader acceptance/Word/adoption
+qualification are not claimed. See the API README and reference limitations for
+the development support matrix and decoder allocation-audit limitations.
+
+
+Follow-up reassessment fixes context-analysis parity for active conditional
+consumers and unused fields after invalid context keys. Added real shared-budget
+boundary tests and a complete original progressive-JPEG decode/round-trip fixture.
+Both platforms pass 35 template tests, nine image tests and refreshed installed
+wheel/CLI checks; all nine Windows CI steps pass. No new Word interactive/visual
+or full Linux CI qualification is claimed.
