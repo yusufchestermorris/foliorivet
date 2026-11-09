@@ -13,6 +13,7 @@ Runs all documented Python workflows against the installed foliorivet candidate:
 
 from __future__ import annotations
 
+import inspect
 import json
 from pathlib import Path
 import re
@@ -23,6 +24,7 @@ import tempfile
 import foliorivet
 from foliorivet import (
     TemplateError,
+    analyze_context,
     inspect_template,
     preflight_template,
     render_template,
@@ -35,12 +37,16 @@ def log(msg: str) -> None:
 
 def test_public_api() -> None:
     log("Verifying public API exports and signatures...")
-    expected_all = ["TemplateError", "render_template", "inspect_template", "preflight_template"]
+    expected_all = ["TemplateError", "render_template", "inspect_template", "preflight_template", "analyze_context"]
     assert foliorivet.__all__ == expected_all, f"Unexpected __all__: {foliorivet.__all__}"
     assert issubclass(TemplateError, Exception), "TemplateError must inherit from Exception"
     assert callable(render_template)
     assert callable(inspect_template)
     assert callable(preflight_template)
+    assert callable(analyze_context)
+    for function in (render_template, inspect_template, preflight_template, analyze_context):
+        option = inspect.signature(function).parameters["scalar_fanout"]
+        assert option.kind == inspect.Parameter.KEYWORD_ONLY and option.default is False
     log("  [OK] Public symbols verified successfully.")
 
 
@@ -65,6 +71,9 @@ def test_official_examples(repo_root: Path, staging_dir: Path) -> None:
 
         # 2. Preflight
         context = json.loads(input_path.read_text(encoding="utf-8"))
+        findings = analyze_context(template_path, context)
+        assert findings["missing_paths"] == [] and findings["unused_supplied_paths"] == []
+        assert findings["diagnostics"] == []
         preflight = preflight_template(template_path, context)
         assert preflight["save_verified"] is False
         assert preflight["scalar_count"] > 0
@@ -102,16 +111,15 @@ def test_readme_links_and_snippet(repo_root: Path, staging_dir: Path) -> None:
 
     # 1. Verify all relative Markdown links
     link_pattern = re.compile(r"\[.*?\]\((?!http)(.*?)\)")
-    relative_links = link_pattern.findall(content)
-    log(f"  Found {len(relative_links)} relative links in README.md")
-
-    for link in relative_links:
-        # Strip anchor if present
-        target_path_str = link.split("#")[0]
-        if not target_path_str:
-            continue
-        target_path = repo_root / target_path_str
-        assert target_path.exists(), f"Broken README link: {link} -> {target_path} not found"
+    for readme in (readme_path, repo_root / "bindings/python/README.md"):
+        relative_links = link_pattern.findall(readme.read_text(encoding="utf-8"))
+        log(f"  Found {len(relative_links)} relative links in {readme.relative_to(repo_root)}")
+        for link in relative_links:
+            target_path_str = link.split("#")[0]
+            if not target_path_str:
+                continue
+            target_path = readme.parent / target_path_str
+            assert target_path.exists(), f"Broken README link: {link} -> {target_path} not found"
 
     log("  [OK] All relative links in README.md verified.")
 
@@ -119,18 +127,17 @@ def test_readme_links_and_snippet(repo_root: Path, staging_dir: Path) -> None:
     py_pattern = re.compile(r"```python\n(.*?)\n```", re.DOTALL)
     matches = py_pattern.findall(content)
     assert matches, "No python code block found in README.md"
-    snippet = matches[0]
+    snippet = "\n\n".join(matches)
 
     # Replace output path to write into staging_dir
     test_output_path = staging_dir / "readme_quickstart_output.docx"
     adapted_snippet = snippet.replace('Path("staging/quotation.docx")', f'Path(r"{test_output_path}")')
 
     # Execute snippet in isolated namespace
-    namespace: dict = {}
     subprocess.run([sys.executable, "-I", "-c", adapted_snippet], cwd=repo_root, check=True)
     assert test_output_path.is_file(), "README snippet did not create expected output file"
     assert test_output_path.stat().st_size > 1000, "README snippet generated file too small"
-    log("  [OK] README quickstart Python snippet executed and verified.")
+    log("  [OK] README quickstart and development API snippets executed and verified.")
 
 
 def test_bidirectional_validation(repo_root: Path) -> None:

@@ -6,20 +6,17 @@ use std::sync::Arc;
 use super::{CmdError, CmdResult, ControlKind, ControlRange, Document, Value, error, json};
 use wordcraft_doc::{Block, ContentControl, InlineObject, Path, Row, StoryRef, Table};
 
-const MAX_ROWS: usize = 1000;
-const MAX_EXPANSION: usize = 16 * 1024 * 1024;
-
-struct RowSlot {
-    table: usize,
-    row: usize,
-    tag: String,
-    prototype: Row,
+pub(super) struct RowSlot {
+    pub(super) table: usize,
+    pub(super) row: usize,
+    pub(super) tag: String,
+    pub(super) prototype: Row,
 }
 
-struct Resolved {
-    masked: Document,
-    rows: Vec<RowSlot>,
-    images: Vec<ControlRange>,
+pub(super) struct Resolved {
+    pub(super) masked: Document,
+    pub(super) rows: Vec<RowSlot>,
+    pub(super) images: Vec<ControlRange>,
 }
 
 pub(super) fn needed(doc: &Document) -> bool {
@@ -47,7 +44,7 @@ fn ordinary(control: &ContentControl, tag: &str) -> Result<(), CmdError> {
     Ok(())
 }
 
-fn row_document(doc: &Document, row: &Row) -> Document {
+pub(super) fn row_document(doc: &Document, row: &Row) -> Document {
     let mut mini = doc.clone();
     mini.parts.clear();
     let mut row = row.clone();
@@ -56,7 +53,7 @@ fn row_document(doc: &Document, row: &Row) -> Document {
     mini
 }
 
-fn check_row(doc: &Document, row: &Row, tag: &str) -> Result<(), CmdError> {
+fn check_row(doc: &Document, row: &Row, tag: &str, options: super::TemplateOptions) -> Result<(), CmdError> {
     if row.props.header || row.props.fmt_change.is_some() || row.cells.is_empty() {
         return Err(error("resolve", tag, "prototype must be a non-header data row without tracked formatting"));
     }
@@ -102,7 +99,7 @@ fn check_row(doc: &Document, row: &Row, tag: &str) -> Result<(), CmdError> {
         }
     }
     let mini = row_document(doc, row);
-    let targets = super::targets(&mini)?;
+    let targets = super::targets(&mini, options)?;
     if targets.is_empty() {
         return Err(error("resolve", tag, "unsupported prototype without item targets; add at least one value:item.* control"));
     }
@@ -115,7 +112,7 @@ fn check_row(doc: &Document, row: &Row, tag: &str) -> Result<(), CmdError> {
     Ok(())
 }
 
-fn resolve(doc: &Document, scoped: bool) -> Result<Resolved, CmdError> {
+pub(super) fn resolve(doc: &Document, scoped: bool, options: super::TemplateOptions) -> Result<Resolved, CmdError> {
     if doc.has_unbalanced_controls() || doc.settings.protection.is_some() || doc.settings.track_changes {
         return Err(error("resolve", "document", "unbalanced controls, protection or tracked-change editing are unsupported"));
     }
@@ -148,7 +145,7 @@ fn resolve(doc: &Document, scoped: bool) -> Result<Resolved, CmdError> {
             {
                 return Err(error("resolve", &control.tag, "keep a separate static/header row; vertical merges in the target table are unsupported"));
             }
-            check_row(doc, row, &control.tag)?;
+            check_row(doc, row, &control.tag, options)?;
             let table = masked.table_mut(StoryRef::Body, &Path::top(ti)).map_err(|e| error("resolve", &control.tag, &e.to_string()))?;
             let Some(mask) = table.rows.get_mut(ri) else { return Err(error("resolve", &control.tag, "prototype missing")) };
             mask.controls = Default::default();
@@ -193,36 +190,39 @@ fn resolve(doc: &Document, scoped: bool) -> Result<Resolved, CmdError> {
             images.push(r);
         }
     }
-    let scalar_targets = super::targets(&masked)?;
+    let scalar_targets = super::targets(&masked, options)?;
     if names.len().saturating_add(scalar_targets.len()) > super::MAX_TARGETS {
         return Err(error("resolve", "document", "more than 1024 document-level tagged targets"));
     }
-    if !scoped && scalar_targets.keys().any(|tag| tag.starts_with("value:item.")) {
+    if !scoped && scalar_targets.iter().any(|(tag, _)| tag.starts_with("value:item.")) {
         return Err(error("resolve", "value:item.*", "item fields require a supported rows: prototype scope"));
     }
     Ok(Resolved { masked, rows, images })
 }
 
-pub(super) fn inspect(doc: &Document) -> CmdResult {
-    inspect_scope(doc, false)
+pub(super) fn inspect_with_options(doc: &Document, options: super::TemplateOptions) -> CmdResult {
+    inspect_scope(doc, false, options)
 }
 
-pub(super) fn inspect_scope(doc: &Document, scoped: bool) -> CmdResult {
-    let resolved = resolve(doc, scoped)?;
-    let mut result = super::inspect_scalars(&resolved.masked)?;
+pub(super) fn inspect_scope(doc: &Document, scoped: bool, options: super::TemplateOptions) -> CmdResult {
+    let resolved = resolve(doc, scoped, options)?;
+    let mut result = super::inspect_scalars(&resolved.masked, options)?;
     let entries = result.get_mut("targets").and_then(Value::as_array_mut).ok_or_else(|| error("inspect", "document", "target list missing"))?;
     for slot in resolved.rows {
         entries.push(
             json!({"tag": slot.tag, "scope": "document", "story": "body", "table": slot.table, "row": slot.row, "kind": "row", "supported": true}),
         );
-        for (tag, r) in super::targets(&row_document(doc, &slot.prototype))? {
-            entries.push(json!({"tag": tag, "scope": slot.tag, "kind": r.control.kind.name(), "supported": true}));
+        for (tag, r) in super::targets(&row_document(doc, &slot.prototype), options)? {
+            entries.push(json!({"tag": tag, "scope": slot.tag, "story": r.start.story, "path": r.start.path, "offset": r.start.off, "kind": r.control.kind.name(), "supported": true}));
         }
     }
     for r in resolved.images {
         entries.push(
             json!({"tag": r.control.tag, "scope": "document", "story": r.start.story, "path": r.start.path, "kind": "picture", "supported": true}),
         );
+    }
+    if entries.len() > super::MAX_TARGETS {
+        return Err(error("inspect", "document", "more than 1024 tagged target occurrences"));
     }
     Ok(result)
 }
@@ -255,8 +255,8 @@ fn consume_controls(row: &mut Row) -> Result<(), CmdError> {
     Ok(())
 }
 
-pub(super) fn scalar_finish(doc: &mut Document, context: &Value) -> CmdResult {
-    if super::targets(doc)?.is_empty() {
+pub(super) fn scalar_finish(doc: &mut Document, context: &Value, options: super::TemplateOptions) -> CmdResult {
+    if super::targets(doc, options)?.is_empty() {
         let mut pending = vec![(context, 0usize)];
         while let Some((value, depth)) = pending.pop() {
             let object = value.as_object().ok_or_else(|| error("preflight", "context", "missing required target for unused input field"))?;
@@ -267,35 +267,45 @@ pub(super) fn scalar_finish(doc: &mut Document, context: &Value) -> CmdResult {
         }
         return Ok(json!({"scalar_count": 0}));
     }
-    super::populate(doc, context)
+    super::populate_with_options(doc, context, options)
 }
 
-fn prepare(doc: &Document, context: &Value, assets_dir: &str) -> Result<(Document, Value), CmdError> {
-    prepare_scope(doc, context, assets_dir, false)
+fn prepare(
+    doc: &Document,
+    context: &Value,
+    assets_dir: &str,
+    options: super::TemplateOptions,
+    budget: &mut super::Budget,
+) -> Result<(Document, Value), CmdError> {
+    prepare_scope(doc, context, assets_dir, false, options, budget)
 }
 
-pub(super) fn prepare_scope(doc: &Document, context: &Value, assets_dir: &str, scoped: bool) -> Result<(Document, Value), CmdError> {
+pub(super) fn prepare_scope(
+    doc: &Document,
+    context: &Value,
+    assets_dir: &str,
+    scoped: bool,
+    options: super::TemplateOptions,
+    budget: &mut super::Budget,
+) -> Result<(Document, Value), CmdError> {
     if !context.is_object() || serde_json::to_vec(context).map_or(true, |v| v.len() > super::MAX_JSON) {
         return Err(error("preflight", "context", "expected a JSON object of at most 1 MiB"));
     }
-    let Resolved { mut masked, rows, mut images } = resolve(doc, scoped)?;
+    inspect_scope(doc, scoped, options)?;
+    let Resolved { mut masked, rows, mut images } = resolve(doc, scoped, options)?;
     let mut context = context.clone();
     let mut expansions = Vec::new();
-    let mut budget = 0usize;
     let mut count = 0usize;
     for slot in rows {
         let input = take(&mut context, field(&slot.tag, "rows:")?, &slot.tag)?;
         let items = input.as_array().ok_or_else(|| error("preflight", &slot.tag, "expected an array of item objects"))?;
         count = count.saturating_add(items.len());
         let size = serde_json::to_vec(&slot.prototype).map_err(|e| error("preflight", &slot.tag, &e.to_string()))?.len();
-        budget = budget.saturating_add(size.saturating_mul(items.len()));
-        if count > MAX_ROWS || budget > MAX_EXPANSION {
-            return Err(error("preflight", &slot.tag, "expansion exceeds 1000 total rows or 16 MiB prototype budget"));
-        }
+        budget.charge(0, items.len(), size.saturating_mul(items.len()), &slot.tag)?;
         let mut expanded = Vec::new();
         for (index, item) in items.iter().enumerate() {
             let mut mini = row_document(doc, &slot.prototype);
-            super::populate(&mut mini, &json!({"item": item}))
+            super::populate_with_options(&mut mini, &json!({"item": item}), options)
                 .map_err(|e| error("populate", &slot.tag, &format!("scope={}[{index}]: {e}", slot.tag)))?;
             let mut row = mini
                 .body
@@ -305,6 +315,8 @@ pub(super) fn prepare_scope(doc: &Document, context: &Value, assets_dir: &str, s
                 .cloned()
                 .ok_or_else(|| error("populate", &slot.tag, "prototype missing"))?;
             consume_controls(&mut row)?;
+            let actual = serde_json::to_vec(&row).map_err(|e| error("populate", &slot.tag, &e.to_string()))?.len();
+            budget.charge(0, 0, actual, &format!("{}[{index}]", slot.tag))?;
             expanded.push(row);
         }
         expansions.push((slot.table, slot.row, expanded));
@@ -317,7 +329,7 @@ pub(super) fn prepare_scope(doc: &Document, context: &Value, assets_dir: &str, s
         replace_image(&mut masked, r, &input, assets_dir)?;
     }
     // Scalar edits change text offsets but never row/block indexes.
-    let scalars = scalar_finish(&mut masked, &if scoped { json!({"item": context}) } else { context })?;
+    let scalars = scalar_finish(&mut masked, &if scoped { json!({"item": context}) } else { context }, options)?;
     expansions.sort_by_key(|(t, r, _)| (std::cmp::Reverse(*t), std::cmp::Reverse(*r)));
     for (ti, ri, expanded) in expansions {
         let table = masked.table_mut(StoryRef::Body, &Path::top(ti)).map_err(|e| error("populate", "row", &e.to_string()))?;
@@ -329,8 +341,32 @@ pub(super) fn prepare_scope(doc: &Document, context: &Value, assets_dir: &str, s
     Ok((masked, json!({"scalar_count": scalars["scalar_count"], "row_count": count, "image_count": images.len(), "save_verified": false})))
 }
 
+pub(super) fn validate_image_input(input: &Value, tag: &str) -> Result<(), CmdError> {
+    let obj = input.as_object().ok_or_else(|| error("preflight", tag, "expected an image descriptor object"))?;
+    if obj.keys().any(|k| !matches!(k.as_str(), "path" | "required" | "unavailable")) || obj.get("required").is_some_and(|v| !v.is_boolean()) {
+        return Err(error("preflight", tag, "unknown picture option or non-boolean required flag"));
+    }
+    let value = obj.get("path").ok_or_else(|| error("preflight", tag, "missing required path option"))?;
+    if value.is_null() && obj.get("required") == Some(&Value::Bool(false)) {
+        let text = obj
+            .get("unavailable")
+            .and_then(Value::as_str)
+            .filter(|v| !v.is_empty())
+            .ok_or_else(|| error("preflight", tag, "optional absent chart requires Python-supplied unavailable text"))?;
+        validate_text(text, tag)?;
+    } else {
+        let relative =
+            value.as_str().filter(|v| !v.is_empty()).ok_or_else(|| error("preflight", tag, "required chart needs a nonempty relative asset path"))?;
+        if relative.contains([':', '\\']) || std::path::Path::new(relative).components().any(|c| !matches!(c, std::path::Component::Normal(_))) {
+            return Err(error("preflight", tag, "expected a relative asset path without traversal"));
+        }
+    }
+    Ok(())
+}
+
 fn replace_image(doc: &mut Document, r: &ControlRange, input: &Value, assets_dir: &str) -> Result<(), CmdError> {
     let tag = &r.control.tag;
+    validate_image_input(input, tag)?;
     let obj = input
         .as_object()
         .ok_or_else(|| error("preflight", tag, "expected {path: relative asset path} or {path: null, required: false, unavailable: text}"))?;
@@ -368,7 +404,34 @@ fn replace_image(doc: &mut Document, r: &ControlRange, input: &Value, assets_dir
     let bytes = asset_bytes(assets_dir, relative, tag)?;
     let pic = wordcraft_geom::picture::probe(&bytes).map_err(|e| error("preflight", tag, &format!("unsupported or invalid image: {e:?}")))?;
     // Header dimensions alone do not establish that the encoded chart is usable.
-    pic.decode(64 * 1024 * 1024).map_err(|e| error("preflight", tag, &format!("image cannot be decoded within 64 MiB: {e}")))?;
+    const DECODE_LIMIT: u64 = 64 * 1024 * 1024;
+    if !pic.fits(DECODE_LIMIT) {
+        return Err(error(
+            "preflight",
+            tag,
+            &format!(
+                "image allocation budget exceeded: {} x {} pixels; conservative peak estimate={} bytes, limit={} bytes (64 MiB); estimate includes native output, decoder-held storage and RGBA8 conversion buffers; no resizing is performed; {}",
+                pic.width,
+                pic.height,
+                pic.peak_bytes(),
+                DECODE_LIMIT,
+                pic.allocation_description()
+            ),
+        ));
+    }
+    pic.decode(DECODE_LIMIT).map_err(|e| {
+        error(
+            "preflight",
+            tag,
+            &format!(
+                "image decode failed: {} x {} pixels, estimated peak={} bytes, allocation limit={} bytes: {e}",
+                pic.width,
+                pic.height,
+                pic.peak_bytes(),
+                DECODE_LIMIT
+            ),
+        )
+    })?;
     let (nw, nh) = (pic.width as f32, pic.height as f32);
     if nw <= 0.0 || nh <= 0.0 {
         return Err(error("preflight", tag, "image dimensions must be positive"));
@@ -425,14 +488,27 @@ fn asset_bytes(_: &str, _: &str, tag: &str) -> Result<Vec<u8>, CmdError> {
     Err(error("preflight", tag, "filesystem chart assets require a native build"))
 }
 
-pub(super) fn preflight(doc: &Document, context: &Value, assets_dir: &str) -> CmdResult {
-    prepare(doc, context, assets_dir).map(|(_, counts)| counts)
+pub(super) fn preflight_with_options(doc: &Document, context: &Value, assets_dir: &str, options: super::TemplateOptions) -> CmdResult {
+    prepare(doc, context, assets_dir, options, &mut super::Budget::default()).map(|(_, counts)| counts)
 }
 
-pub(super) fn populate(doc: &mut Document, context: &Value, assets_dir: &str) -> CmdResult {
-    let (copy, counts) = prepare(doc, context, assets_dir)?;
+pub(super) fn populate_with_options(doc: &mut Document, context: &Value, assets_dir: &str, options: super::TemplateOptions) -> CmdResult {
+    let (copy, counts) = prepare(doc, context, assets_dir, options, &mut super::Budget::default())?;
     *doc = copy;
     Ok(counts)
+}
+
+#[cfg(test)]
+fn inspect(doc: &Document) -> CmdResult {
+    inspect_with_options(doc, super::TemplateOptions::default())
+}
+#[cfg(test)]
+fn preflight(doc: &Document, context: &Value, assets: &str) -> CmdResult {
+    preflight_with_options(doc, context, assets, super::TemplateOptions::default())
+}
+#[cfg(test)]
+fn populate(doc: &mut Document, context: &Value, assets: &str) -> CmdResult {
+    populate_with_options(doc, context, assets, super::TemplateOptions::default())
 }
 
 #[cfg(test)]
@@ -620,6 +696,86 @@ mod tests {
         assert!(populate(&mut bad, &input, root.to_str().unwrap()).is_err());
         assert_eq!(bad, before);
         std::fs::remove_file(path).unwrap();
+        std::fs::remove_dir(root).unwrap();
+    }
+    #[test]
+    fn row_fanout_and_global_rows_share_the_budget() {
+        let options = super::super::TemplateOptions { scalar_fanout: true };
+        let mut doc = fixture();
+        let table = doc.table_mut(StoryRef::Body, &Path::top(0)).unwrap();
+        table.rows[1].cells[0].blocks.push(paragraph("value:item.name"));
+        let context = json!({"classes":[{"name":"Alpha"},{"name":"Beta"}]});
+        assert!(preflight(&doc, &context, "").is_err());
+        assert_eq!(populate_with_options(&mut doc, &context, "", options).unwrap()["scalar_count"], 0);
+        let table = doc.body[0].as_table().unwrap();
+        for (i, row) in table.rows.iter().skip(1).enumerate() {
+            for block in &row.cells[0].blocks {
+                assert_eq!(block.as_para().unwrap().text, if i == 0 { "Alpha" } else { "Beta" });
+            }
+        }
+        let mut budget = super::super::Budget::default();
+        budget.charge(0, 999, 0, "other repeat").unwrap();
+        let err = prepare_scope(&fixture(), &context, "", false, options, &mut budget).unwrap_err().to_string();
+        assert!(err.contains("row budget") && err.contains("used=1001"));
+    }
+    #[test]
+    fn analysis_does_not_open_required_images() {
+        let mut doc = fixture();
+        chart(&mut doc);
+        let context = json!({"classes":[],"chart":{"path":"never-created.png"}});
+        let result = super::super::analyze_context(&doc, &context, super::super::TemplateOptions::default()).unwrap();
+        assert_eq!(result["missing_paths"], json!([]));
+        assert_eq!(result["unused_supplied_paths"], json!([]));
+        assert_eq!(result["diagnostics"], json!([]));
+        assert!(preflight(&doc, &context, "").is_err());
+    }
+    #[test]
+    fn rows_honor_remaining_document_byte_budget_at_exact_boundary() {
+        let doc = fixture();
+        let context = json!({"classes":[{"name":"Alpha"},{"name":"Beta"}]});
+        let options = super::super::TemplateOptions::default();
+        let limit = 16 * 1024 * 1024;
+        let mut measured = super::super::Budget::default();
+        prepare_scope(&doc, &context, "", false, options, &mut measured).unwrap();
+        assert!(measured.bytes > 0);
+        for extra in [0, 1] {
+            let mut budget = super::super::Budget::default();
+            budget.charge(0, 0, limit - measured.bytes + extra, "earlier repeat").unwrap();
+            let result = prepare_scope(&doc, &context, "", false, options, &mut budget);
+            assert_eq!(budget.bytes, limit + extra);
+            if extra == 0 {
+                assert!(result.is_ok());
+            } else {
+                let message = result.unwrap_err().to_string();
+                assert!(message.contains("expansion byte budget") && message.contains("used=16777217") && message.contains("rows:classes[1]"));
+            }
+        }
+    }
+    #[test]
+    fn progressive_chart_preserves_original_bytes_and_aspect_ratio() {
+        let bytes: &[u8] = include_bytes!("../../../geom/tests/data/progressive-rgb.jpg");
+        let root = std::env::temp_dir().join(format!("foliorivet-progressive-{}", std::process::id()));
+        std::fs::create_dir_all(&root).unwrap();
+        std::fs::write(root.join("chart.jpg"), bytes).unwrap();
+        let mut doc = fixture();
+        chart(&mut doc);
+        let input = json!({"classes":[],"chart":{"path":"chart.jpg"}});
+        populate(&mut doc, &input, root.to_str().unwrap()).unwrap();
+        let back = wordcraft_docx::read(&wordcraft_docx::write(&doc).unwrap()).unwrap();
+        for doc in [&doc, &back] {
+            let p = doc.body[1].as_para().unwrap();
+            let (media, w, h) = p
+                .objects
+                .iter()
+                .find_map(|object| match object {
+                    InlineObject::Image { media, w, h, .. } => Some((media, *w, *h)),
+                    _ => None,
+                })
+                .unwrap();
+            assert_eq!(doc.media[media].as_ref().as_slice(), bytes);
+            assert!((w - 180.0).abs() < 0.01 && (h - 90.0).abs() < 0.01);
+        }
+        std::fs::remove_file(root.join("chart.jpg")).unwrap();
         std::fs::remove_dir(root).unwrap();
     }
 }
